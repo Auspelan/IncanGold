@@ -16,41 +16,6 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // ..
 
 // ----------------------
-// 数据库连接
-// ----------------------
-// const connectDB = async () => {
-//   // Not implemnted
-//   let pool = await initializeDatabase();
-
-//   // 示例路由：查询数据
-//   app.get("/users", async (req, res) => {
-//     try {
-//       // 执行 SQL 查询（使用参数化查询防止 SQL 注入）
-//       const [rows] = await pool.query("SELECT * FROM user");
-//       res.json(rows);
-//     } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ error: "数据库查询失败" });
-//     }
-//   });
-// }
-  // 示例路由：插入数据
-//   app.post("/users", async (req, res) => {
-//     const { id, num } = req.body;
-//     try {
-//       const [result] = await pool.query(
-//         "INSERT INTO test (id, num) VALUES (?, ?)",
-//         [id, num]
-//       );
-//       res.json({ id: result.insertId });
-//     } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ error: "数据插入失败" });
-//     }
-//   });
-// };
-
-// ----------------------
 // 中间件配置
 // ----------------------
 
