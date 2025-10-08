@@ -1,13 +1,50 @@
 # 前后端接口
 
-所有接口在错误时返回 4xx 或 5xx 状态码，正常时返回 200。
+## 路由接口
 
-错误时的返回格式为：
+### POST /api/usr/login
+上传用户私钥和用户名
+
+#### 请求格式
 
 ```json
 {
-    error: "错误信息"
+    privateKey: string,
+    usrName: string
 }
 ```
 
-以下只列出正常时的返回格式。
+
+#### 返回格式
+
+```json
+{
+}
+```
+
+
+## Socket接口
+
+### joinMatchingQueue
+将当前用户加入匹配队列
+#### 类型
+前端 to 后端
+#### 参数格式
+```json
+{
+    playerId: string,
+    ...
+}
+```
+
+### gameStart
+匹配成功，开始游戏
+#### 类型
+后端 to 前端
+#### 参数格式
+```json
+{
+    playerId: string,
+    ...
+}
+```
