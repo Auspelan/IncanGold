@@ -44,25 +44,66 @@ npm run dev
 npm run build
 ```
 
-## Pinia Store
-> 这里暂时写了几个必要的状态变量和动作函数，后续可以根据后端代码调整
-### State
-- `phase`: 当前游戏阶段 ('lobby' | 'game' | 'result')
-- `round`: 当前回合数
-- `gameStage`: 游戏内阶段 ('selection' | 'judgment' | 'settlement')
-- `campGold`: 营地金币
-- `handGold`: 手中金币
-- `position`: 当前位置
-- `trapNum`: 陷阱数量
-- `pathGold`: 路径上各位置的金币数组
-- `players`: 所有玩家信息数组
+## Pinia Store 状态变量详细说明
 
-### Actions
-- `initSocket()`: 初始化 Socket 连接和事件监听
-- `joinRoom(playerName, entranceFee)`: 加入游戏房间
-- `chooseAdvance()`: 选择前进
-- `chooseReturn()`: 选择返回营地
-- `restart()`: 重新开始游戏
+### 连接与身份状态
+- `socket`: Socket.IO 客户端实例
+- `playerId`: 当前玩家的唯一标识符
+- `playerName`: 当前玩家的姓名
+- `roomId`: 房间ID标识符
+
+### 游戏阶段控制
+- `phase`: 主要游戏阶段 ('lobby' | 'game' | 'result')
+  - `lobby`: 大厅等待阶段，等待玩家加入
+  - `game`: 游戏进行阶段
+  - `result`: 游戏结束结果展示阶段
+- `round`: 当前回合数 (1-3)
+- `maxRounds`: 最大回合数 (默认3)
+- `gameStage`: 游戏内详细阶段 ('selection' | 'judgment' | 'settlement')
+  - `selection`: 选择阶段，玩家选择前进或返回
+  - `judgment`: 判定阶段，处理地块结果
+  - `settlement`: 结算阶段，回合或游戏结束结算
+
+### 玩家个人状态
+- `position`: 当前玩家在路径上的位置 (0表示营地)
+- `campGold`: 营地中的安全金币数量
+- `handGold`: 手中携带的金币数量
+- `hasChosen`: 当前回合是否已做出选择
+- `waitingForOthers`: 是否正在等待其他玩家选择
+
+### 游戏环境状态
+- `trapNum`: 当前回合遇到的陷阱数量 (0-2)
+- `pathGold`: 路径上各位置累积的金币数组
+- `players`: 所有玩家信息数组，包含：
+  - `id`: 玩家ID
+  - `name`: 玩家姓名
+  - `campGold`: 营地金币
+  - `handGold`: 手中金币
+  - `position`: 当前位置
+  - `inCamp`: 是否在营地
+  - `choice`: 当前回合选择 ('advance' | 'return' | null)
+  - `isAI`: 是否为AI玩家 (Mock模式专用)
+
+### Mock模式专用状态
+- `aiPlayers`: AI玩家状态数组 (仅Mock模式)
+- `currentTile`: 当前抽取的地块类型 ('reward' | 'trap')
+- `maxReward`: 单次奖励的最大值
+
+### Actions (游戏操作方法)
+TBD:
+
+### Mock模式专用Actions
+- `_mockJoinRoom()`: 模拟加入房间
+- `_mockGameStart()`: 模拟游戏开始
+- `_mockPlayerChoice()`: 模拟玩家选择
+- `_mockAIDecisions()`: 模拟AI决策
+- `_mockJudgmentPhase()`: 模拟判定阶段
+- `_mockHandleReturningPlayers()`: 处理返回营地的玩家
+- `_mockDrawTile()`: 模拟抽取地块
+- `_mockHandleTrap()`: 处理陷阱逻辑
+- `_mockHandleReward()`: 处理奖励逻辑
+- `_mockRoundSettlement()`: 回合结算
+- `_mockGameOver()`: 游戏结束处理
 
 ## 游戏流程
 1. **大厅阶段**: 输入名字和入场费，等待3名玩家加入
