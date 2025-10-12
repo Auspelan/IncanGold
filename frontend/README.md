@@ -51,6 +51,7 @@ npm run build
 - `playerId`: 当前玩家的唯一标识符
 - `playerName`: 当前玩家的姓名
 - `roomId`: 房间ID标识符
+- `entranceFee`: 当前玩家进入房间的入场费
 
 ### 游戏阶段控制
 - `phase`: 主要游戏阶段 ('lobby' | 'game' | 'result')
@@ -65,24 +66,41 @@ npm run build
   - `settlement`: 结算阶段，回合或游戏结束结算
 
 ### 玩家个人状态
-- `position`: 当前玩家在路径上的位置 (0表示营地)
+- `id`: 玩家ID
+- `name`: 玩家姓名
 - `campGold`: 营地中的安全金币数量
 - `handGold`: 手中携带的金币数量
+- `position`: 当前玩家在路径上的位置 (0表示营地)
+- `inCamp`: 是否在营地
+- `choice`: 当前回合选择 ('advance' | 'return' | null)
 - `hasChosen`: 当前回合是否已做出选择
 - `waitingForOthers`: 是否正在等待其他玩家选择
+- `isAI`: 是否为AI玩家 (Mock模式专用)
 
 ### 游戏环境状态
-- `trapNum`: 当前回合遇到的陷阱数量 (0-2)
-- `pathGold`: 路径上各位置累积的金币数组
 - `players`: 所有玩家信息数组，包含：
-  - `id`: 玩家ID
-  - `name`: 玩家姓名
-  - `campGold`: 营地金币
-  - `handGold`: 手中金币
-  - `position`: 当前位置
-  - `inCamp`: 是否在营地
-  - `choice`: 当前回合选择 ('advance' | 'return' | null)
-  - `isAI`: 是否为AI玩家 (Mock模式专用)
+  - `id`
+  - `name`
+  - `campGold`
+  - `handGold`
+  - `position`
+  - `inCamp`
+  - `choice`
+  - `hasChosen`
+  - `waitingForOthers`
+  - `isAI`
+- `trapEncountered`:玩家们目前是否遭遇到过陷阱 (true | false)
+- `pathLength`: 路的长度
+- `pathGold`: 路上每个位置金币数的数组
+- `pathTrap`: 路上是否有陷阱的布尔数组
+
+### 游戏结算状态
+- `finalResults`: 结算结果数组，包含
+  - `rank`: 当前玩家的名次
+  - `playerId`: 玩家 id
+  - `playerName`: 玩家姓名
+  - `finalGold`: 总金币数
+  - `etherChange`: 以太币赢输金额
 
 ### Mock模式专用状态
 - `aiPlayers`: AI玩家状态数组 (仅Mock模式)
