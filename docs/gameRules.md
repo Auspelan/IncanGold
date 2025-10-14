@@ -1,8 +1,7 @@
 # 印加宝藏
+[飞书云文档](https://icn5bnei7pa7.feishu.cn/wiki/CvlLwbtLsifECgkl1TGcOUeonQe)
 
 游戏需要在线匹配3个玩家，需要投入$entranceFee才能入场。
-
-
 
 进入游戏后每个玩家初始在营地拥有$initVal金币。
 

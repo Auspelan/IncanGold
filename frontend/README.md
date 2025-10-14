@@ -66,19 +66,20 @@ npm run build
   - `settlement`: 结算阶段，回合或游戏结束结算
 
 ### 玩家个人状态
-- `id`: 玩家ID
-- `name`: 玩家姓名
-- `campGold`: 营地中的安全金币数量
-- `handGold`: 手中携带的金币数量
-- `position`: 当前玩家在路径上的位置 (0表示营地)
-- `inCamp`: 是否在营地
-- `choice`: 当前回合选择 ('advance' | 'return' | null)
-- `hasChosen`: 当前回合是否已做出选择
-- `waitingForOthers`: 是否正在等待其他玩家选择
-- `isAI`: 是否为AI玩家 (Mock模式专用)
+- `player`: 玩家 object
+  - `id`: 玩家ID
+  - `name`: 玩家姓名
+  - `campGold`: 营地中的安全金币数量
+  - `handGold`: 手中携带的金币数量
+  - `position`: 当前玩家在路径上的位置 (0表示营地)
+  - `inCamp`: 是否在营地
+  - `choice`: 当前回合选择 ('advance' | 'return' | null)
+  - `hasChosen`: 当前回合是否已做出选择
+  - `waitingForOthers`: 是否正在等待其他玩家选择
+  - `isAI`: 是否为AI玩家 (Mock模式专用)
 
-### 游戏环境状态
-- `players`: 所有玩家信息数组，包含：
+### 游戏环境状态t
+- `players`: 所有玩家信息数组，包含： 
   - `id`
   - `name`
   - `campGold`
@@ -95,7 +96,7 @@ npm run build
 - `pathTrap`: 路上是否有陷阱的布尔数组
 
 ### 游戏结算状态
-- `finalResults`: 结算结果数组，包含
+- `finalResults`: 结算结果数组，包含`finalResult`对象，对象内包含：
   - `rank`: 当前玩家的名次
   - `playerId`: 玩家 id
   - `playerName`: 玩家姓名

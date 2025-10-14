@@ -1,4 +1,5 @@
 # 前后端接口
+[飞书云文档](https://icn5bnei7pa7.feishu.cn/wiki/CvlLwbtLsifECgkl1TGcOUeonQe)
 
 ## 路由接口
 
@@ -85,16 +86,6 @@ See documentation [here](/frontend/README.md#pinia-store-状态变量详细说�
 }
 ```
 
-#### leaveRoom
-玩家请求离开游戏房间
-
-```json
-{
-    "roomId": "string",
-    "playerId": "string"
-}
-```
-
 #### playerChoice
 玩家做出选择（前进/返回）
 
@@ -106,6 +97,25 @@ See documentation [here](/frontend/README.md#pinia-store-状态变量详细说�
 }
 ```
 
+#### continuePlay
+结束游戏后，玩家请求开始新一轮游戏
+
+```json
+{
+    "roomId": "string",
+    "playerId": "string"
+}
+```
+
+#### leaveRoom
+结束游戏后，玩家请求离开游戏房间
+
+```json
+{
+    "roomId": "string",
+    "playerId": "string"
+}
+```
 
 ### 后端 → 前端事件接口
 TBD
@@ -115,12 +125,6 @@ TBD
 ```json
 {
     "roomId": "string",
-    "players": [
-        {
-            "id": "string",
-            "name": "string"
-        }
-    ]
 }
 ```
 
@@ -128,10 +132,13 @@ TBD
 所有玩家进入房间后开始游戏
 ```json
 {
-    "phase": "game",
     "round": 1,
     "maxRounds": "number",
     "gameStage": "selection",
+    "trapEncounterd": false,
+    "pathLength": "number",
+    "pathGold": "number[]",
+    "pathTrap": "number[]"
     "players": [
         {
             "id": "string",
@@ -145,10 +152,6 @@ TBD
             "watingForOthers": false
         }
     ],
-    "trapEncounterd": false,
-    "pathLength": "number",
-    "pathGold": "number[]",
-    "pathTrap": "number[]"
 }
 ```
 
@@ -157,7 +160,6 @@ TBD
 
 ```json
 {
-    "phase": "game",
     "round": "number",
     "maxRounds": "number",
     "gameStage": "selection" | "judgment" | "settlement",
@@ -185,20 +187,6 @@ TBD
 游戏结束，进入结算阶段
 ```json
 {
-    "phase": "result",
-    "round": "number",
-    "maxRounds": "number", 
-    "gameStage": "settlement",
-    "players": [
-        {
-            "id": "string",
-            "name": "string",
-            "campGold": "number",
-            "handGold": "number",
-            "position": "number",
-            "inCamp": "boolean",
-        }
-    ],
     "finalResults": [
         {
             "rank": "number",
@@ -211,3 +199,17 @@ TBD
 }
 ```
 
+### returnRoom
+若选择继续游戏，则重新回到房间，等待新一轮游戏开启
+```json
+{
+
+}
+```
+
+### returnLobby
+若选择离开房间，则回到大厅视图，结束游戏
+```json
+{
+    
+}
