@@ -4,18 +4,11 @@ class Room {
 
     this.players = players;
 
-    this.settings = {
-        entranceFee: gameSettings.entranceFee || 50,
-        initialGold: gameSettings.initialGold || 0,
-        totalRounds: gameSettings.totalRounds || 3
-    };
-
     this.game = null; // 当前房间的游戏实例
     this.isGameStarted = false;
     this.isGameFinished = false;
 
     this.createdAt = Date.now();
-
   }
 
 
@@ -26,7 +19,7 @@ class Room {
 
 // 添加玩家
     addPlayer(player) {
-        if (this.getPlayerNum() >= 4) {
+        if (this.getPlayerNum() >= 3) {
             throw new Error('Room is full');
         }
         this.players.push(player);
@@ -47,6 +40,10 @@ class Room {
         return this.players;
     }
 
+// 获取游戏实例
+    getGame() {
+        return this.game;
+    }
 }
 
 module.exports = Room;
