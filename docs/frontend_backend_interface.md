@@ -134,7 +134,6 @@ TBD
 {
     "round": 1,
     "maxRounds": "number",
-    "gameStage": "selection",
     "trapEncounterd": false,
     "pathLength": "number",
     "pathGold": "number[]",
@@ -162,7 +161,6 @@ TBD
 {
     "round": "number",
     "maxRounds": "number",
-    "gameStage": "selection" | "judgment" | "settlement",
     "trapEncountered": "boolean",
     "pathLength": "number",
     "pathGold": "number[]",
