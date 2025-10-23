@@ -3,6 +3,10 @@
 // ----------------------
 const express = require('express');
 const {Web3} = require('web3');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
+
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 // const initializeDatabase = require("./db"); // 导入数据库连接
@@ -13,15 +17,22 @@ const swaggerSpec = require('./config/swagger');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-// ..
 
 // ----------------------
 // 中间件配置
 // ----------------------
-
+app.use(cors());
 app.use(express.json({ limit: '10mb' })); // JSON请求体解析
 app.use(express.urlencoded({ extended: true }));
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545')); // 区块链网络地址配置
+
+// ----------------------
+// socket.io 初始化
+// ----------------------
+// 创建 http server 并挂载 socket.io，允许跨域（按需调整 origin）
+const server = http.createServer(app);
+const { initSocket, broadcastMessageUpdated } = require('./sockets/socket')
+initSocket(server)
 
 // ----------------------
 // chaincode api
@@ -84,10 +95,10 @@ app.use('/api-docs',
 // ----------------------
 // 路由注册
 // ----------------------
-const gameControlRoutes = require('./routes/gameControl.routes')
+// const gameControlRoutes = require('./routes/gameControl.routes')
 
 // 路由挂载
-app.use('/api/gameControl',gameControlRoutes);
+// app.use('/api/gameControl',gameControlRoutes);
 
 // ----------------------
 // 健康检查端点
@@ -104,9 +115,9 @@ app.get('/health', (req, res) => {
 // 服务启动
 // ----------------------
 const startServer = async () => {
-//   await connectDB();
+  // await connectDB();
   
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`
       Server running in ${NODE_ENV} mode
       http://localhost:${PORT}

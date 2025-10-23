@@ -83,7 +83,6 @@ class GameSessionManager {
     const game = room.game;
     game.makeChoice(playerId,choice);
     if(game.AllPlayersSelected()){
-      game.currentStage = 'judgment';
       game.gameUpdate();
     }
   }

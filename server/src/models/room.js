@@ -44,6 +44,7 @@ class Room {
     getGame() {
         return this.game;
     }
+
 }
 
 module.exports = Room;

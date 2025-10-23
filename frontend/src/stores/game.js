@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { io } from 'socket.io-client'
 
 // 🎭 Mock 模式配置
-const USE_MOCK = true  // 设置为 false 则连接真实后端
+const USE_MOCK = false  // 设置为 false 则连接真实后端
 const MOCK_DELAY = 1500  // Mock 操作延迟时间（毫秒）
 
 export const useGameStore = defineStore('game', {
