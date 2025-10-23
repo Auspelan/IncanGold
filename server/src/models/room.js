@@ -5,8 +5,6 @@ class Room {
     this.players = players;
 
     this.game = null; // 当前房间的游戏实例
-    this.isGameStarted = false;
-    this.isGameFinished = false;
 
     this.createdAt = Date.now();
   }
@@ -43,6 +41,10 @@ class Room {
 // 获取游戏实例
     getGame() {
         return this.game;
+    }
+
+    isPlayerFull() {
+        return this.getPlayerNum() >= 3;
     }
 
 }

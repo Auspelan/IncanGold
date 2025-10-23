@@ -1,10 +1,12 @@
 const Room = require('../models/room');
 const Game = require('../models/game');
+const Player = require('../models/player');
 
 class GameSessionManager {
   constructor() {
     this.rooms = new Map(); // roomId -> Room
     this.games = new Map(); // gameId -> Game
+    this.players = new Map(); // playerId -> Player
     this.waitingPlayers = []; // 等待匹配的玩家
   }
 
@@ -12,9 +14,9 @@ class GameSessionManager {
   addPlayerToQueue(player) {
     // 遍历房间，检查是否有房间可以加入
     for (const room of this.rooms.values()) {
-      if (room.getPlayerNum() < 3) {
+      if (!room.isPlayerFull()) {
         room.addPlayer(player);
-        if(room.getPlayerNum() === 3){
+        if(room.isPlayerFull()){
           this.startGame(room.roomId);
         }
         return;
@@ -29,6 +31,17 @@ class GameSessionManager {
       this.startGame(room.roomId);
       this.waitingPlayers = this.waitingPlayers.filter(p => !playersForRoom.includes(p));
     }
+  }
+
+  createPlayer(playerId, playerName, socket) {
+    const player = new Player(playerId, playerName, socket);
+    this.players.set(playerId, player);
+    return player;
+  }
+
+  removePlayer(playerId) {
+    this.players.delete(playerId);
+    this.waitingPlayers = this.waitingPlayers.filter(p => p.playerId !== playerId);
   }
 
   // 创建房间
@@ -47,6 +60,14 @@ class GameSessionManager {
     return game;
   }
 
+  clearGame(roomId){
+    const room = this.getRoom(roomId);
+    if(room && room.game){
+      this.games.delete(room.game.gameId);
+      room.game = null;
+    }
+  }
+
   getAllRoomIds() {
     return Array.from(this.rooms.keys());
   }
@@ -58,6 +79,10 @@ class GameSessionManager {
 
   getGame(gameId) {
     return this.games.get(gameId);
+  }
+
+  getPlayer(playerId) {
+    return this.players.get(playerId);
   }
 
   // 玩家离开房间
@@ -74,7 +99,6 @@ class GameSessionManager {
   startGame(roomId){
     const room = this.getRoom(roomId);
     room.game = this.createGame(roomId,room.players);
-    room.isGameStarted = true;
   }
 
   //玩家作出选择
@@ -85,6 +109,19 @@ class GameSessionManager {
     if(game.AllPlayersSelected()){
       game.gameUpdate();
     }
+  }
+
+  isGameStarted(roomId){
+    const room = this.getRoom(roomId);
+    const game = room.game;
+    if(!game) return false;
+    return game.isGameStarted;
+  }
+
+  isGameFinished(roomId){
+    const room = this.getRoom(roomId);
+    const game = room.game;
+    return game.isGameFinished;
   }
 }
 

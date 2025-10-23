@@ -73,8 +73,8 @@ class Game {
   startNewRound() {
     this.currentRound += 1;
 
+    // 检查是否超过总轮数
     if (this.currentRound > this.settings.totalRounds) {
-      console.log("-------------Game Over--------------");
       this.isGameFinished = true;
       this.endedAt = Date.now();
       this.calculateFinalRankings();
@@ -92,13 +92,15 @@ class Game {
 
 // 计算最终排名
   calculateFinalRankings() {
+    const totalGold = this.players.reduce((sum, player) => sum + player.goldInCamp, 0);
     this.finalRankings = [...this.players]
       .sort((a, b) => b.goldInCamp - a.goldInCamp)
       .map((player, index) => ({
         rank: index + 1,
         playerId: player.playerId,
         playerName: player.playerName,
-        goldInCamp: player.goldInCamp
+        finalGold: player.goldInCamp,
+        etherChange: this.settings.entranceFee * 3 * (player.goldInCamp / totalGold)
       }));
   }
 

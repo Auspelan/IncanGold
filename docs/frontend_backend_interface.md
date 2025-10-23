@@ -124,7 +124,25 @@ TBD
 匹配成功后分配房间
 ```json
 {
-    "roomId": "string",
+    "room": {
+        "roomId": "string",
+        "players": "Player[]",
+        "game": "Game" || null,
+        "createdAt": "time"
+    },
+}
+```
+
+#### roomUpdate
+房间内其他玩家操作后，房间状态更新
+```json
+{
+    "room": {
+        "roomId": "string",
+        "players": "Player[]",
+        "game": "Game" || null,
+        "createdAt": "time"
+    },
 }
 ```
 
@@ -132,25 +150,7 @@ TBD
 所有玩家进入房间后开始游戏
 ```json
 {
-    "round": 1,
-    "maxRounds": "number",
-    "trapEncounterd": false,
-    "pathLength": "number",
-    "pathGold": "number[]",
-    "pathTrap": "number[]"
-    "players": [
-        {
-            "id": "string",
-            "name": "string",
-            "campGold": 0,
-            "handGold": 0,
-            "position": 0,
-            "inCamp": true,
-            "choice": null,
-            "hasChosen": false,
-            "watingForOthers": false
-        }
-    ],
+    "game": "Game"
 }
 ```
 
@@ -159,25 +159,7 @@ TBD
 
 ```json
 {
-    "round": "number",
-    "maxRounds": "number",
-    "trapEncountered": "boolean",
-    "pathLength": "number",
-    "pathGold": "number[]",
-    "pathTrap": "boolean[]",
-    "players": [
-        {
-            "id": "string",
-            "name": "string",
-            "campGold": "number",
-            "handGold": "number",
-            "position": "number",
-            "inCamp": "boolean",
-            "choice": "advance" | "return" | null,
-            "hasChosen": "boolean",
-            "waitingForOthers": "boolean",
-        }
-    ]
+    "game": "Game"
 }
 ```
 

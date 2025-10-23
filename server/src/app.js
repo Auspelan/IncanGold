@@ -31,7 +31,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 // ----------------------
 // 创建 http server 并挂载 socket.io，允许跨域（按需调整 origin）
 const server = http.createServer(app);
-const { initSocket, broadcastMessageUpdated } = require('./sockets/socket')
+const { initSocket } = require('./sockets/socket')
 initSocket(server)
 
 // ----------------------
