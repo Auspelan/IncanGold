@@ -2,11 +2,11 @@ import { io } from 'socket.io-client';
 
 let socket = null;
 
-export function initSocket(url = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000') {
+export function initSocket(url = import.meta.env.VITE_SOCKET_URL || undefined) {
   if (socket) return socket;
   socket = io(url, {
-    // 根据需要调整选项（身份验证、path 等）
     autoConnect: true,
+    path: '/socket.io'
   });
 
   socket.on('connect', () => {

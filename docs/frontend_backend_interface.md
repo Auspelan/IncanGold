@@ -70,9 +70,6 @@ socket.on('playerChooseChoice', (data) => {
 })
 ```
 
-### 前端状态变量说明
-See documentation [here](/frontend/README.md#pinia-store-状态变量详细说明)
-
 ### 前端 → 后端事件接口
 
 #### joinRoom
@@ -118,7 +115,6 @@ See documentation [here](/frontend/README.md#pinia-store-状态变量详细说�
 ```
 
 ### 后端 → 前端事件接口
-TBD
 
 #### roomAssign
 匹配成功后分配房间
