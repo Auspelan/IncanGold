@@ -5,6 +5,7 @@ class Game {
     
     // 玩家关系（直接引用Room中的玩家对象）
     this.players = players;
+    this.players.forEach(player => player.resetForNewGame());
 
     this.settings = {
       entranceFee: settings.entranceFee || 50,

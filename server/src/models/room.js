@@ -7,6 +7,7 @@ class Room {
     this.game = null; // 当前房间的游戏实例
 
     this.createdAt = Date.now();
+    this.readyPlayers = new Set();
   }
 
 
@@ -21,11 +22,13 @@ class Room {
             throw new Error('Room is full');
         }
         this.players.push(player);
+        this.readyPlayers.delete(player.playerId);
     }
 
 // 移除玩家
     removePlayer(playerId) {
-        this.players = this.players.filter(p => p.id !== playerId);
+        this.players = this.players.filter(p => p.playerId !== playerId);
+        this.readyPlayers.delete(playerId);
     }
 
 // 获取当前玩家数量
@@ -45,6 +48,23 @@ class Room {
 
     isPlayerFull() {
         return this.getPlayerNum() >= 3;
+    }
+
+    markReady(playerId) {
+        this.readyPlayers.add(playerId);
+    }
+
+    clearReady() {
+        this.readyPlayers.clear();
+    }
+
+    isEveryoneReady() {
+        if (this.players.length === 0) return false;
+        return this.readyPlayers.size === this.players.length;
+    }
+
+    getReadyPlayerIds() {
+        return Array.from(this.readyPlayers);
     }
 
 }

@@ -7,12 +7,11 @@ class GameSessionManager {
     this.rooms = new Map(); // roomId -> Room
     this.games = new Map(); // gameId -> Game
     this.players = new Map(); // playerId -> Player
-    this.waitingPlayers = []; // 等待匹配的玩家
   }
 
   // 玩家请求匹配
   addPlayerToQueue(player) {
-    // 遍历房间，检查是否有房间可以加入
+    // 优先填充已有未满房间
     for (const room of this.rooms.values()) {
       if (!room.isPlayerFull()) {
         room.addPlayer(player);
@@ -23,14 +22,8 @@ class GameSessionManager {
       }
     }
 
-    this.waitingPlayers.push(player);
-
-    if (this.waitingPlayers.length >= 3) {
-      const playersForRoom = this.waitingPlayers.splice(0, 3);
-      const room = this.createRoom(playersForRoom);
-      this.startGame(room.roomId);
-      this.waitingPlayers = this.waitingPlayers.filter(p => !playersForRoom.includes(p));
-    }
+    // 否则创建新房间等待其他玩家
+    this.createRoom([player]);
   }
 
   createPlayer(playerId, playerName, socket) {
@@ -41,7 +34,6 @@ class GameSessionManager {
 
   removePlayer(playerId) {
     this.players.delete(playerId);
-    this.waitingPlayers = this.waitingPlayers.filter(p => p.playerId !== playerId);
   }
 
   // 创建房间
@@ -65,6 +57,7 @@ class GameSessionManager {
     if(room && room.game){
       this.games.delete(room.game.gameId);
       room.game = null;
+      room.clearReady();
     }
   }
 
@@ -98,6 +91,7 @@ class GameSessionManager {
   // 人齐开始游戏
   startGame(roomId){
     const room = this.getRoom(roomId);
+    room.clearReady();
     room.game = this.createGame(roomId,room.players);
   }
 

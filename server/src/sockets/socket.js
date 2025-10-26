@@ -2,53 +2,116 @@ const { Server } = require('socket.io');
 const GameSessionManager = require('../managers/Manager');
 
 let io = null;
-const manager = new GameSessionManager(); // 单例 manager
+const manager = new GameSessionManager();
+
+// ----------------------
+// Helpers: sanitize complex objects before emitting to clients
+// ----------------------
+function toPlainPlayer(player) {
+  if (!player) return null;
+  return {
+    playerId: player.playerId,
+    playerName: player.playerName,
+    goldInCamp: player.goldInCamp,
+    goldCarried: player.goldCarried,
+    isOnRoad: player.isOnRoad,
+    position: player.position,
+    hasMadeChoice: player.hasMadeChoice,
+    choice: player.choice,
+  };
+}
+
+function toPlainGame(game) {
+  if (!game) return null;
+  return {
+    gameId: game.gameId,
+    roomId: game.roomId,
+    currentRound: game.currentRound,
+    currentStep: game.currentStep,
+    trapEncountered: game.trapEncountered,
+    roadGolds: Array.isArray(game.roadGolds) ? [...game.roadGolds] : [],
+    isGameStarted: game.isGameStarted,
+    isGameFinished: game.isGameFinished,
+    finalRankings: Array.isArray(game.finalRankings) ? [...game.finalRankings] : [],
+    players: Array.isArray(game.players) ? game.players.map(toPlainPlayer) : [],
+  };
+}
+
+function toPlainRoom(room) {
+  if (!room) return null;
+  return {
+    roomId: room.roomId,
+    createdAt: room.createdAt,
+    players: Array.isArray(room.players) ? room.players.map(toPlainPlayer) : [],
+    game: toPlainGame(room.game),
+    readyPlayers: room.getReadyPlayerIds ? room.getReadyPlayerIds() : [],
+  };
+}
 
 function findRoomBySocketId(socketId) {
   for (const room of manager.rooms.values()) {
-    if (room.players && room.players.find(p => p.socketId === socketId)) return room;
+    if (room.players && room.players.find(p => p.socket && p.socket.id === socketId)) {
+      return room;
+    }
   }
   return null;
 }
 
 function findPlayerInRoomBySocket(room, socketId) {
   if (!room || !room.players) return null;
-  return room.players.find(p => p.socketId === socketId) || null;
+  return room.players.find(p => p.socket && p.socket.id === socketId) || null;
 }
 
-function broadcastRoomUpdate(room){
-    if (!io || !room) return;
-    io.to(room.roomId).emit('roomUpdate', {
-        room: room
-    });
+function ensureSocketJoinsRoom(room) {
+  if (!io || !room || !Array.isArray(room.players)) return;
+  room.players.forEach(player => {
+    if (!player?.socket) return;
+    try {
+      if (typeof player.socket.join === 'function') {
+        player.socket.join(room.roomId);
+      } else if (player.socket.id) {
+        const s = io.sockets.sockets.get(player.socket.id);
+        if (s) s.join(room.roomId);
+      }
+    } catch (err) {
+      // Ignore join failures; roomUpdate will later reflect actual active sockets
+    }
+  });
 }
 
-function broadcastGameUpdate(room) {
+function broadcastRoomUpdate(room) {
   if (!io || !room) return;
-  io.to(room.roomId).emit('gameUpdate', {
-    game: room.game
+  io.to(room.roomId).emit('roomUpdate', {
+    room: toPlainRoom(room)
   });
 }
 
 function broadcastRoomAssign(room) {
   if (!io || !room) return;
   io.to(room.roomId).emit('roomAssign', {
-    room: room
+    room: toPlainRoom(room)
   });
 }
 
 function broadcastGameStart(room) {
-    if (!io || !room) return;
-    io.to(room.roomId).emit('gameStart', {
-        game: room.game
-    });
+  if (!io || !room) return;
+  io.to(room.roomId).emit('gameStart', {
+    game: toPlainGame(room.game)
+  });
+}
+
+function broadcastGameUpdate(room) {
+  if (!io || !room) return;
+  io.to(room.roomId).emit('gameUpdate', {
+    game: toPlainGame(room.game)
+  });
 }
 
 function broadcastGameOver(room) {
-    if (!io || !room) return;
-    io.to(room.roomId).emit('gameOver', {
-        finalResults: room.game.finalRankings
-    });
+  if (!io || !room) return;
+  io.to(room.roomId).emit('gameOver', {
+    finalResults: Array.isArray(room.game?.finalRankings) ? [...room.game.finalRankings] : []
+  });
 }
 
 function initSocket(server, options = {}) {
@@ -67,36 +130,29 @@ function initSocket(server, options = {}) {
 
     socket.on('ping', () => socket.emit('pong'));
 
-    // 请求加入指定房间或进入匹配队列
     socket.on('joinRoom', (payload = {}, ack) => {
-        console.log('joinRoom payload:', payload);
+      console.log('joinRoom payload:', payload);
       try {
-        const player = manager.createPlayer(payload.playerId, payload.playerName, socket);
+        const playerId = payload.playerId || socket.id;
+        const playerName = payload.playerName || `Player-${socket.id.slice(-4)}`;
 
-        // 进入匹配队列（manager 会在合适时创建房间）
+        const player = manager.createPlayer(playerId, playerName, socket);
         manager.addPlayerToQueue(player);
 
-        // 可能立即创建了房间/开始游戏，尝试查找玩家所在房间
         const joinedRoom = findRoomBySocketId(socket.id);
 
         if (joinedRoom) {
-            // 加入 socket.io 房间
-          joinedRoom.players.forEach(p => {
-            try {
-              const s = io.sockets.sockets.get(p.socketId);
-              if (s) s.join(joinedRoom.roomId);
-            } catch (e) {
-              // 忽略：可能该玩家已断开，后续 broadcastRoomUpdate 会反映实际玩家列表
-            }
-          });
-          
+          ensureSocketJoinsRoom(joinedRoom);
           broadcastRoomAssign(joinedRoom);
-          broadcastGameStart(joinedRoom);
-          if (typeof ack === 'function') ack({ ok: true, roomId: joinedRoom.roomId, players: joinedRoom.players });
-        }
-        else {
-          // 进入等待队列
-          if (typeof ack === 'function') ack({ ok: true, waiting: true });
+          if (joinedRoom.game) {
+            broadcastGameStart(joinedRoom);
+          }
+          if (typeof ack === 'function') {
+            const plainRoom = toPlainRoom(joinedRoom);
+            ack({ ok: true, roomId: plainRoom.roomId, players: plainRoom.players, readyPlayers: plainRoom.readyPlayers, game: plainRoom.game });
+          }
+        } else {
+          if (typeof ack === 'function') ack({ ok: true, waiting: true, players: [], readyPlayers: [] });
         }
       } catch (err) {
         console.error('joinRoom error', err);
@@ -104,24 +160,20 @@ function initSocket(server, options = {}) {
       }
     });
 
-    // 玩家在房间内做选择（前进/返回）
     socket.on('playerChoice', (payload = {}, ack) => {
       try {
         const { roomId, playerId, choice } = payload;
         const room = manager.getRoom(roomId);
         const player = manager.getPlayer(playerId);
         if (!room) return ack && ack({ ok: false, error: 'room not found' });
-
         if (!player) return ack && ack({ ok: false, error: 'player not in room' });
 
-        // 将选择委托给 manager（用 player.id）
         manager.makeChoice(roomId, playerId, choice);
 
-        // 广播房间最新状态（Manager 内部会触发 gameUpdate 等，这里发送房间快照）
         const updatedRoom = manager.getRoom(roomId);
-        broadcastGameUpdate(updatedRoom.game);
-        if(manager.isGameFinished(roomId)){
-            broadcastGameOver(updatedRoom);
+        broadcastGameUpdate(updatedRoom);
+        if (manager.isGameFinished(roomId)) {
+          broadcastGameOver(updatedRoom);
         }
 
         if (typeof ack === 'function') ack({ ok: true });
@@ -138,23 +190,32 @@ function initSocket(server, options = {}) {
         const player = manager.getPlayer(playerId);
         if (!room) return ack && ack({ ok: false, error: 'room not found' });
         if (!player) return ack && ack({ ok: false, error: 'player not in room' });
-        // 重置游戏状态
-        manager.clearGame(roomId);
-        broadcastRoomUpdate(room);
-        if(room.isPlayerFull()){
-            manager.startGame(roomId);
-            broadcastGameStart(room);
+
+        if (typeof room.markReady === 'function') {
+          room.markReady(playerId);
         }
 
-        socket.emit('returnRoom', {});
-        if (typeof ack === 'function') ack({ ok: true });
+        const plainRoom = toPlainRoom(room);
+        socket.emit('returnRoom', { room: plainRoom });
+
+        const everyoneReady = typeof room.isEveryoneReady === 'function' ? room.isEveryoneReady() : false;
+
+        if (everyoneReady) {
+          manager.clearGame(roomId);
+          broadcastRoomUpdate(room);
+          manager.startGame(roomId);
+          broadcastGameStart(room);
+        } else {
+          broadcastRoomUpdate(room);
+        }
+
+        if (typeof ack === 'function') ack({ ok: true, waiting: !everyoneReady, readyPlayers: plainRoom.readyPlayers });
       } catch (err) {
         console.error('continuePlay error', err);
         if (typeof ack === 'function') ack({ ok: false, error: err.message });
       }
     });
 
-    // 主动离开房间
     socket.on('leaveRoom', (payload = {}, ack) => {
       try {
         const { roomId, playerId } = payload || {};
@@ -165,7 +226,7 @@ function initSocket(server, options = {}) {
         const player = manager.getPlayer(playerId);
         if (!player) return ack && ack({ ok: false, error: 'player not in room' });
 
-        manager.leaveRoom(roomId, player.id);
+        manager.leaveRoom(roomId, player.playerId);
         socket.leave(roomId);
 
         const after = manager.getRoom(roomId);
@@ -185,7 +246,6 @@ function initSocket(server, options = {}) {
       if (!room) return;
       const player = findPlayerInRoomBySocket(room, socket.id);
       if (!player) return;
-      // 使用 manager 清理玩家
       manager.leaveRoom(room.roomId, player.playerId);
       const after = manager.getRoom(room.roomId);
       if (after) broadcastRoomUpdate(after);
