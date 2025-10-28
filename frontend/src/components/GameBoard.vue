@@ -1,7 +1,7 @@
 <template>
   <div class="board">
     <h3>探索路径</h3>
-    <div class="path">
+    <div class="grid" :style="gridStyle">
       <div class="tile camp">
         <strong>营地</strong>
         <div class="players" v-if="campPlayers.length">
@@ -9,18 +9,27 @@
         </div>
       </div>
 
-      <div
-        v-for="tile in tiles"
-        :key="tile.position"
-        class="tile"
-        :class="{ trap: isTrap(tile.position), current: isCurrent(tile.position) }"
-      >
-        <div class="pos">{{ tile.position }}</div>
-        <div class="gold">金币: {{ tile.gold }}</div>
-        <div class="players" v-if="playersByTile.get(tile.position)?.length">
-          <span v-for="p in playersByTile.get(tile.position)" :key="p.playerId">{{ shortName(p.playerName) }}</span>
+      <template v-if="tiles.length">
+        <div
+          v-for="tile in tiles"
+          :key="tile.position"
+          class="tile"
+          :class="{ trap: tile.isTrap, current: isCurrent(tile.position) }"
+        >
+          <div class="pos">{{ tile.position }}</div>
+          <div class="gold" v-if="!tile.isTrap">金币: {{ tile.gold }}</div>
+          <div class="gold trap-label" v-else>陷阱</div>
+          <div class="players" v-if="playersByTile.get(tile.position)?.length">
+            <span v-for="p in playersByTile.get(tile.position)" :key="p.playerId">{{ shortName(p.playerName) }}</span>
+          </div>
         </div>
-      </div>
+      </template>
+
+      <template v-else>
+        <div class="tile unknown">
+          <span>尚未探索</span>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -34,7 +43,27 @@ export default {
   setup() {
     const gameStore = useGameStore()
 
-    const tiles = computed(() => gameStore.pathTiles)
+    const maxKnownStep = computed(() => gameStore.game.currentStep || 0)
+    const roadGolds = computed(() => gameStore.game.roadGolds || [])
+    const tiles = computed(() => {
+      const maxStep = Math.min(maxKnownStep.value, roadGolds.value.length - 1)
+      if (maxStep <= 0) return []
+      const list = []
+      for (let position = 1; position <= maxStep; position += 1) {
+        const value = roadGolds.value[position]
+        list.push({
+          position,
+          gold: value >= 0 ? value : 0,
+          isTrap: value === -1
+        })
+      }
+      return list
+    })
+
+    const columns = computed(() => Math.min(6, Math.max(4, Math.ceil(Math.sqrt(Math.max(tiles.value.length, 12))))))
+    const gridStyle = computed(() => ({
+      gridTemplateColumns: `repeat(${columns.value}, minmax(80px, 1fr))`
+    }))
 
     const playersByTile = computed(() => {
       const map = new Map()
@@ -54,21 +83,11 @@ export default {
       return new Set(gameStore.game.players.filter(p => p.isOnRoad).map(p => p.position))
     })
 
-    const trapPositions = computed(() => {
-      const trapSet = new Set()
-      const road = gameStore.game.roadGolds || []
-      road.forEach((value, index) => {
-        if (value === -1) trapSet.add(index)
-      })
-      return trapSet
-    })
-
     const shortName = (name = '') => (name.length > 4 ? `${name.slice(0, 3)}…` : name)
 
     const isCurrent = position => currentPositions.value.has(position)
-    const isTrap = position => trapPositions.value.has(position)
-
-    return { tiles, playersByTile, campPlayers, shortName, isCurrent, isTrap }
+    
+    return { tiles, playersByTile, campPlayers, gridStyle, shortName, isCurrent }
   }
 }
 </script>
@@ -81,15 +100,19 @@ export default {
   background: #fff;
 }
 
-.path {
-  display: flex;
+.grid {
+  display: grid;
   gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 6px;
+  overflow-y: auto;
+  max-height: 320px;
+  padding: 6px 0;
+  grid-auto-rows: minmax(90px, auto);
+  align-content: start;
 }
 
 .tile {
-  min-width: 90px;
+  min-width: 70px;
+  min-height: 70px;
   border: 1px solid #dfe3e6;
   border-radius: 10px;
   padding: 10px;
@@ -142,4 +165,19 @@ export default {
 .gold {
   color: #555;
 }
+
+.trap-label {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.unknown {
+  background: #f3f4f6;
+  color: #888;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 </style>

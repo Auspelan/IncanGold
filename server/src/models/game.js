@@ -32,6 +32,10 @@ class Game {
 
     this.roundHistory = [];
     this.actionsLog = [];
+    this.lastEvent = null;
+    this.lastEventByPlayer = {};
+    this.eventSeq = 0;
+    this.lastEventTick = 0;
 
   }
 
@@ -117,9 +121,10 @@ class Game {
 
   // 更新游戏状态
   gameUpdate(){
-    // 将选择为return的玩家加入playersReturn
+    const eventDetails = {};
+    let event = null;
+
     var playersReturn = [];
-    // 将选择为advance的玩家加入playersAdvance
     var playersAdvance = [];
     this.players.forEach(player => {
       if(player.choice === 'return'){
@@ -128,11 +133,9 @@ class Game {
         playersAdvance.push(player);
       }
     });
-    
-    // 处理选择为return的玩家
+
     var returnedPlayerCount = playersReturn.length;
     if(returnedPlayerCount > 0){
-      // 计算返回营地的玩家从路上能够获得的金币
       var goldFromRoad = 0;
       for(let i=1; i<=this.currentStep; i++){
         if(this.roadGolds[i] > 0){
@@ -140,38 +143,90 @@ class Game {
           this.roadGolds[i] = this.roadGolds[i] % returnedPlayerCount;
         }
       }
-      // 更新返回营地的玩家状态
       playersReturn.forEach(player => {
+        const carryBefore = player.goldCarried;
         player.goldCarried += goldFromRoad;
         player.returnCamp();
+        eventDetails[player.playerId] = {
+          type: 'return',
+          gained: carryBefore + goldFromRoad,
+          share: goldFromRoad
+        };
       });
+      if(!event) event = 'players-return';
     }
 
-    // 处理选择为advance的玩家
     var advancedPlayerCount = playersAdvance.length;
     if(advancedPlayerCount > 0){
       this.currentStep += 1;
-      // 检查是否遇到陷阱
       if(this.roadGolds[this.currentStep] === -1){
-        // 初次遇到陷阱，玩家前进到当前步
         if(!this.trapEncountered){
           this.trapEncountered = true;
-          playersAdvance.forEach(player => player.advanceTo(this.currentStep));
+          playersAdvance.forEach(player => {
+            player.advanceTo(this.currentStep);
+            eventDetails[player.playerId] = { type: 'trap-first' };
+          });
+          event = 'trap-first';
         }
-        else{// 再次遇到陷阱，玩家失去携带的金币并返回营地
-          playersAdvance.forEach(player => player.trapEncounter());
+        else{
+          playersAdvance.forEach(player => {
+            const lost = player.goldCarried;
+            player.trapEncounter();
+            eventDetails[player.playerId] = {
+              type: 'trap-second',
+              lost: lost
+            };
+          });
+          event = 'trap-second';
         }
       }
-      else{// 没有遇到陷阱，玩家前进到当前步，获得路上的金币
+      else{
+        const totalGold = this.roadGolds[this.currentStep];
+        const share = Math.floor(totalGold / advancedPlayerCount);
+        const remainder = totalGold % advancedPlayerCount;
         playersAdvance.forEach(player => player.advanceTo(this.currentStep));
-        playersAdvance.forEach(player => player.goldCarried += Math.floor(this.roadGolds[this.currentStep]/advancedPlayerCount));
-        this.roadGolds[this.currentStep] = this.roadGolds[this.currentStep] % advancedPlayerCount;
+        playersAdvance.forEach(player => {
+          player.goldCarried += share;
+          eventDetails[player.playerId] = {
+            type: share > 0 ? 'reward' : 'advance',
+            gained: share
+          };
+        });
+        this.roadGolds[this.currentStep] = remainder;
+        event = share > 0 ? 'reward' : (event || 'advance');
       }
     }
 
-    if(this.AllPlayersReturned()){
+    const allReturned = this.AllPlayersReturned();
+    if(allReturned){
+      if(!event) event = 'round-end';
       this.startNewRound();
     }
+
+    const fallbackType = (() => {
+      if (event === 'players-return') return 'return';
+      if (event === 'reward') return 'advance';
+      if (event === 'round-end') return 'round-end';
+      return event || 'advance';
+    })();
+
+    this.players.forEach(player => {
+      if (!eventDetails[player.playerId]) {
+        eventDetails[player.playerId] = { type: fallbackType };
+      }
+    });
+
+    this.eventSeq += 1;
+    const tick = this.eventSeq;
+
+    this.players.forEach(player => {
+      const detail = eventDetails[player.playerId] || (eventDetails[player.playerId] = { type: fallbackType });
+      detail.tick = tick;
+    });
+
+    this.lastEvent = event;
+    this.lastEventByPlayer = eventDetails;
+    this.lastEventTick = tick;
   }
   
   // 检查是否全部玩家已经作出选择

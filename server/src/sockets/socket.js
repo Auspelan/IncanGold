@@ -34,6 +34,11 @@ function toPlainGame(game) {
     isGameFinished: game.isGameFinished,
     finalRankings: Array.isArray(game.finalRankings) ? [...game.finalRankings] : [],
     players: Array.isArray(game.players) ? game.players.map(toPlainPlayer) : [],
+    lastEvent: game.lastEvent || null,
+    lastEventTick: game.lastEventTick || 0,
+    lastEventByPlayer: game.lastEventByPlayer ? Object.fromEntries(
+      Object.entries(game.lastEventByPlayer).map(([playerId, detail]) => [playerId, { ...detail }])
+    ) : {},
   };
 }
 
@@ -199,8 +204,12 @@ function initSocket(server, options = {}) {
         socket.emit('returnRoom', { room: plainRoom });
 
         const everyoneReady = typeof room.isEveryoneReady === 'function' ? room.isEveryoneReady() : false;
+        const roomFull = typeof room.isPlayerFull === 'function'
+          ? room.isPlayerFull()
+          : Array.isArray(room.players) && room.players.length >= 3;
+        const canStart = roomFull && everyoneReady;
 
-        if (everyoneReady) {
+        if (canStart) {
           manager.clearGame(roomId);
           broadcastRoomUpdate(room);
           manager.startGame(roomId);
@@ -209,7 +218,15 @@ function initSocket(server, options = {}) {
           broadcastRoomUpdate(room);
         }
 
-        if (typeof ack === 'function') ack({ ok: true, waiting: !everyoneReady, readyPlayers: plainRoom.readyPlayers });
+        if (typeof ack === 'function') {
+          ack({
+            ok: true,
+            waiting: !canStart,
+            readyPlayers: plainRoom.readyPlayers,
+            roomFull,
+            everyoneReady
+          });
+        }
       } catch (err) {
         console.error('continuePlay error', err);
         if (typeof ack === 'function') ack({ ok: false, error: err.message });

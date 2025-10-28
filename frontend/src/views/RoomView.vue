@@ -1,11 +1,12 @@
 <template>
   <section class="room-view">
+    <div v-if="gameStore.eventMessage" class="event-banner">{{ gameStore.eventMessage }}</div>
     <h2>房间等待区</h2>
     <p class="summary">房间号：<strong>{{ roomLabel }}</strong></p>
 
     <div class="players-card">
       <header>
-        <span>当前玩家 ({{ displayCount }}/3)</span>
+        <span>当前玩家 ({{ players.length }}/3)</span>
         <span v-if="statusText" :class="['status', statusClass]">{{ statusText }}</span>
       </header>
       <ul>
@@ -38,24 +39,17 @@ export default {
   setup() {
     const gameStore = useGameStore()
 
-    const rawPlayers = computed(() => {
+    const players = computed(() => {
       if (gameStore.roomPlayers.length) return gameStore.roomPlayers
       return gameStore.game.players || []
     })
 
     const readySet = computed(() => new Set(gameStore.roomReadyPlayers || []))
 
-    const players = computed(() => {
-      if (readySet.value.size > 0 && readySet.value.size < rawPlayers.value.length) {
-        return rawPlayers.value.filter(player => readySet.value.has(player.playerId))
-      }
-      return rawPlayers.value
-    })
-
-    const needed = computed(() => Math.max(0, 3 - rawPlayers.value.length))
+    const needed = computed(() => Math.max(0, 3 - players.value.length))
 
     const status = computed(() => {
-      const total = rawPlayers.value.length
+      const total = players.value.length
       if (gameStore.isQueued && !gameStore.roomId) {
         return { text: '匹配中，等待分配房间...', cls: 'waiting' }
       }
@@ -79,18 +73,7 @@ export default {
     const statusText = computed(() => status.value.text)
     const statusClass = computed(() => status.value.cls)
 
-    const displayCount = computed(() => {
-      const total = rawPlayers.value.length
-      if (readySet.value.size > 0 && readySet.value.size < total) {
-        return readySet.value.size
-      }
-      if (total > 0) {
-        return total
-      }
-      return players.value.length
-    })
-
-    return { gameStore, players, needed, readySet, statusText, statusClass, roomLabel, displayCount }
+    return { gameStore, players, needed, readySet, statusText, statusClass, roomLabel }
   }
 }
 </script>
@@ -192,3 +175,11 @@ li.self {
   background: #fff;
 }
 </style>
+.event-banner {
+  background: #fdf3d7;
+  color: #a66d03;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}

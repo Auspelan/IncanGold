@@ -4,11 +4,19 @@
     <p class="desc">所有玩家同时决定前进或返回，等待结果更新。</p>
 
     <div class="buttons">
-      <button @click="gameStore.chooseAdvance" :disabled="disableButtons">前进探险</button>
-      <button @click="gameStore.chooseReturn" :disabled="disableButtons">返回营地</button>
+      <button
+        @click="gameStore.chooseAdvance"
+        :disabled="actionLocked"
+        :class="{ locked: actionLocked, blocked: choiceBlocked && !actionLocked }"
+      >前进探险</button>
+      <button
+        @click="gameStore.chooseReturn"
+        :disabled="actionLocked"
+        :class="{ locked: actionLocked, blocked: choiceBlocked && !actionLocked }"
+      >返回营地</button>
     </div>
 
-    <p v-if="gameStore.waitingForOthers" class="hint">已提交选择，等待其他玩家...</p>
+    <p v-if="statusHint" class="hint">{{ statusHint }}</p>
   </div>
 </template>
 
@@ -20,8 +28,22 @@ export default {
   name: 'PlayerActions',
   setup() {
     const gameStore = useGameStore()
-    const disableButtons = computed(() => gameStore.hasPendingChoice || !gameStore.selfPlayer)
-    return { gameStore, disableButtons }
+    const actionLocked = computed(() => !gameStore.selfPlayer || !gameStore.isConnected)
+    const choiceBlocked = computed(() => {
+      const self = gameStore.selfPlayer
+      if (!self) return false
+      if (!self.isOnRoad) return true
+      if (self.hasMadeChoice) return true
+      return gameStore.hasPendingChoice
+    })
+    const statusHint = computed(() => {
+      const self = gameStore.selfPlayer
+      if (!self) return ''
+      if (!self.isOnRoad) return '你已返回营地，等待下一轮开始。'
+      if (self.hasMadeChoice || gameStore.waitingForOthers) return '已提交选择，等待其他玩家...'
+      return ''
+    })
+    return { gameStore, actionLocked, choiceBlocked, statusHint }
   }
 }
 </script>
@@ -45,6 +67,17 @@ export default {
   gap: 12px;
   justify-content: center;
   margin-bottom: 10px;
+}
+
+.buttons button.locked {
+  background: #f0f2f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.buttons button.blocked {
+  background: #f5f8ff;
+  color: #5470c6;
 }
 
 .hint {

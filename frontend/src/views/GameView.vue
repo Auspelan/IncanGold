@@ -1,5 +1,6 @@
 <template>
   <section class="game-view">
+    <div v-if="gameStore.eventMessage" class="event-banner">{{ gameStore.eventMessage }}</div>
     <GameStatus />
 
     <div class="content">
@@ -60,6 +61,14 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.event-banner {
+  background: #fdf3d7;
+  color: #a66d03;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 .content {
