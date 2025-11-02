@@ -90,7 +90,6 @@ function initialState() {
     isConnected: false,
     connectionError: null,
     phase: 'lobby', // 'lobby' | 'room' | 'game' | 'result'
-    playerId: null,
     playerName: '',
     entranceFee: 100,
     roomId: null,
@@ -134,7 +133,6 @@ export const useGameStore = defineStore('game', {
 
       on('connect', () => {
         const socket = getSocket()
-        this.playerId = socket?.id ?? null
         this.isConnected = true
         this.connectionError = null
       })
@@ -494,7 +492,6 @@ export const useGameStore = defineStore('game', {
       Object.assign(this, next)
       this.socketReady = true
       this.isConnected = socketConnected
-      this.playerId = socketId
     }
   }
 })

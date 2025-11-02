@@ -2,6 +2,8 @@ const Room = require('../models/room');
 const Game = require('../models/game');
 const Player = require('../models/player');
 
+const blockchainService = require('../services/blockchain.service');
+
 class GameSessionManager {
   constructor() {
     this.rooms = new Map(); // roomId -> Room
@@ -44,11 +46,25 @@ class GameSessionManager {
     return room;
   }
 
-  createGame(roomId, players) {
+  createGame(roomId, players){
+    const entryFee = '100000000000000000'; // 0.1 ETH in wei
+    console.log(`Creating game in room ${roomId} with entry fee: ${entryFee} wei`);
+    const settings = { entranceFee: entryFee };
+    
     const room = this.getRoom(roomId);
-    const game = new Game(roomId, players);
+    // 暂时以区块链上的入场费为准
+    const game = new Game(roomId, players, settings);
     this.games.set(game.gameId, game);
     room.game = game;
+
+    try{
+      // Notify blockchain about game creation
+      players.forEach(async (player) => {
+        await blockchainService.joinGameOnChain(game.gameId, player.playerId);
+      });
+    } catch (error) {
+        console.error('Error creating game:', error);
+    }  
     return game;
   }
 
@@ -92,7 +108,7 @@ class GameSessionManager {
   startGame(roomId){
     const room = this.getRoom(roomId);
     room.clearReady();
-    room.game = this.createGame(roomId,room.players);
+    this.createGame(roomId,room.players);
   }
 
   //玩家作出选择
@@ -103,6 +119,17 @@ class GameSessionManager {
     if(game.AllPlayersSelected()){
       game.gameUpdate();
     }
+  }
+
+  settleGameOnChain(gameId){
+    const game = this.getGame(gameId);
+    const winners = [];
+    const payouts = [];
+    game.finalRankings.forEach(ranking => {
+        winners.push(ranking.playerId);
+        payouts.push(ranking.etherChange);
+    });
+    return blockchainService.settleGameOnChain(gameId, winners, payouts);
   }
 
   isGameStarted(roomId){

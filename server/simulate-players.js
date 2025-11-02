@@ -12,7 +12,7 @@ async function simulatePlayers() {
     try {
         // --- MODIFICATION START ---
         // Get the ID of the game that is about to be created
-        const nextGameId = await contract.methods.nextGameId().call();
+        const nextGameId = 'game_' + (Date.now()).toString(); // Simplified game ID generation
         console.log(`Preparing to simulate players for Game ID: ${nextGameId}`);
         // --- MODIFICATION END ---
 
@@ -25,15 +25,15 @@ async function simulatePlayers() {
         const player3 = accounts[3];
 
         console.log(`Simulating ${player1} joining the game...`);
-        await contract.methods.joinGame().send({ from: player1, value: entryFee, gas: 500000 });
+        await contract.methods.joinGame(nextGameId).send({ from: player1, value: entryFee, gas: 500000 });
         console.log(`-> ${player1} joined.`);
 
         console.log(`Simulating ${player2} joining the game...`);
-        await contract.methods.joinGame().send({ from: player2, value: entryFee, gas: 500000 });
+        await contract.methods.joinGame(nextGameId).send({ from: player2, value: entryFee, gas: 500000 });
         console.log(`-> ${player2} joined.`);
 
         console.log(`Simulating ${player3} joining the game...`);
-        await contract.methods.joinGame().send({ from: player3, value: entryFee, gas: 500000 });
+        await contract.methods.joinGame(nextGameId).send({ from: player3, value: entryFee, gas: 500000 });
         console.log(`-> ${player3} joined.`);
 
         const pot = await contract.methods.getPot(nextGameId).call();

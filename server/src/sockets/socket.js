@@ -178,6 +178,7 @@ function initSocket(server, options = {}) {
         const updatedRoom = manager.getRoom(roomId);
         broadcastGameUpdate(updatedRoom);
         if (manager.isGameFinished(roomId)) {
+          manager.settleGameOnChain(room.game.gameId);
           broadcastGameOver(updatedRoom);
         }
 

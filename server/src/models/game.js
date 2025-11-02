@@ -7,6 +7,10 @@ class Game {
     this.players = players;
     this.players.forEach(player => player.resetForNewGame());
 
+    // if (settings.entranceFee && typeof settings.entranceFee.then === 'function') {
+    //   throw new Error('entranceFee must be resolved (await) before creating Game');
+    // }
+
     this.settings = {
       entranceFee: settings.entranceFee || 50,
       initialGold: settings.initialGold || 0,
@@ -80,9 +84,9 @@ class Game {
 
     // 检查是否超过总轮数
     if (this.currentRound > this.settings.totalRounds) {
-      this.isGameFinished = true;
-      this.endedAt = Date.now();
       this.calculateFinalRankings();
+      this.endedAt = Date.now();
+      this.isGameFinished = true;
       return;
     }
 
@@ -98,15 +102,34 @@ class Game {
 // 计算最终排名
   calculateFinalRankings() {
     const totalGold = this.players.reduce((sum, player) => sum + player.goldInCamp, 0);
+
+    const entranceFeeBN = BigInt(String(this.settings.entranceFee || '0'));
+    const multiplier = 3n;
+
+    if (totalGold === 0) {
+      // 防护：没有金币时返回默认
+      this.finalRankings = this.players.map((player, index) => ({
+        rank: index + 1,
+        playerId: player.playerId,
+        playerName: player.playerName,
+        finalGold: player.goldInCamp || 0,
+        etherChange: '0'
+      }));
+      return;
+    }
+    
     this.finalRankings = [...this.players]
       .sort((a, b) => b.goldInCamp - a.goldInCamp)
-      .map((player, index) => ({
+      .map((player, index) => {
+        const shareBN = (entranceFeeBN * multiplier * BigInt(Math.floor(player.goldInCamp || 0))) / BigInt(totalGold);
+        return {
         rank: index + 1,
         playerId: player.playerId,
         playerName: player.playerName,
         finalGold: player.goldInCamp,
-        etherChange: this.settings.entranceFee * 3 * (player.goldInCamp / totalGold)
-      }));
+        etherChange: shareBN.toString()
+      };
+    });
   }
 
 

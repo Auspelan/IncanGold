@@ -9,6 +9,10 @@
         <input v-model.trim="gameStore.playerName" placeholder="输入你的名字" />
       </label>
       <label>
+        地址
+        <input v-model.trim="gameStore.playerId" placeholder="输入你的账户的区块链地址" />
+      </label>
+      <label>
         入场费
         <input v-model.number="gameStore.entranceFee" type="number" min="0" />
       </label>

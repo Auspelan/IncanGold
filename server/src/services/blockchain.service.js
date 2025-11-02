@@ -11,6 +11,21 @@ const ownerAccount = web3.eth.accounts.privateKeyToAccount(process.env.OWNER_PRI
 
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
+const joinGameOnChain = async (gameId, playerAddress) => {
+    try {
+        const entryFee = await contract.methods.entryFee().call();
+
+        await contract.methods.joinGame(gameId).send({ from: playerAddress, value: entryFee, gas: 500000 });
+
+        console.log(`Player ${playerAddress} joined game ${gameId} successfully.`);
+
+    } catch (error) {
+        console.error("Error joining game on-chain:", error);
+        throw new Error("Blockchain transaction failed.");
+    }
+};
+        
+
 /**
  * Settles a game on the blockchain by distributing the pot to winners.
  * @param {number} gameId - The ID of the game to settle.
@@ -19,6 +34,8 @@ const contract = new web3.eth.Contract(contractABI, contractAddress);
  * @returns {Promise<object>} - The transaction receipt.
  */
 const settleGameOnChain = async (gameId, winners, payouts) => {
+    // 将金额转化为uint256
+    
     try {
         // Get the transaction data for the settleGame function
         const txData = contract.methods.settleGame(gameId, winners, payouts).encodeABI();
@@ -44,6 +61,7 @@ const settleGameOnChain = async (gameId, winners, payouts) => {
         const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
 
         console.log(`Game ${gameId} settled successfully. Transaction hash: ${receipt.transactionHash}`);
+        console.log(`Winners: ${winners}, Payouts: ${payouts}`);
         return receipt;
 
     } catch (error) {
@@ -67,6 +85,7 @@ const getEntryFee = async () => {
 };
 
 module.exports = {
+    joinGameOnChain,
     settleGameOnChain,
     getEntryFee,
     contractAddress, // Export this for the frontend

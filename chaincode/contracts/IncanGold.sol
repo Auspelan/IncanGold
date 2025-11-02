@@ -12,7 +12,6 @@ contract IncanGold {
 
     address public owner;
     uint256 public entryFee; // The cost to join a game, in wei
-    uint256 public nextGameId;
 
     // A struct to hold all data for a single game session
     struct Game {
@@ -22,14 +21,14 @@ contract IncanGold {
         bool isActive;
     }
 
-    // A mapping from gameId to the Game struct
-    mapping(uint256 => Game) public games;
+    // A mapping from gameId (string) to the Game struct
+    mapping(string => Game) public games;
 
     // === EVENTS ===
-    // Events are crucial for the frontend/backend to listen to on-chain activities
-    event GameCreated(uint256 indexed gameId, uint256 entryFee);
-    event PlayerJoined(uint256 indexed gameId, address indexed player);
-    event GameSettled(uint256 indexed gameId, address[] winners, uint256[] payouts);
+    // Note: string cannot be indexed. Use bytes32 if you want an indexed id.
+    event GameCreated(string gameId, uint256 entryFee);
+    event PlayerJoined(string gameId, address indexed player);
+    event GameSettled(string gameId, address[] winners, uint256[] payouts);
 
     // === MODIFIERS ===
     // Modifiers are reusable code that can be attached to functions to check certain conditions
@@ -43,7 +42,6 @@ contract IncanGold {
     constructor(uint256 _entryFee) {
         owner = msg.sender;
         entryFee = _entryFee; // e.g., 1000000000000000000 for 1 ETH
-        nextGameId = 1;
     }
 
     // === CORE FUNCTIONS ===
@@ -52,20 +50,16 @@ contract IncanGold {
      * @dev Allows a player to join the current active game by paying the entry fee.
      * If no active game exists, it creates one.
      */
-    function joinGame() public payable {
-        // The player must send exactly the entry fee
+    function joinGame(string memory _gameId) public payable {
         require(msg.value == entryFee, "Incorrect entry fee sent");
 
-        uint256 currentGameId = nextGameId - 1;
-        Game storage currentGame = games[currentGameId];
+        Game storage currentGame = games[_gameId];
 
         // If no game is active or the last game was settled, create a new one.
-        if (!currentGame.isActive || currentGame.players.length >= 5) { // Max 5 players in Incan Gold
-            currentGameId = nextGameId;
-            currentGame = games[currentGameId];
+        if (!currentGame.isActive) {
+            // currentGame is a storage reference; mark active and emit
             currentGame.isActive = true;
-            nextGameId++;
-            emit GameCreated(currentGameId, entryFee);
+            emit GameCreated(_gameId, entryFee);
         }
 
         // Prevent a player from joining the same game twice
@@ -76,7 +70,7 @@ contract IncanGold {
         currentGame.hasJoined[msg.sender] = true;
         currentGame.pot += msg.value;
 
-        emit PlayerJoined(currentGameId, msg.sender);
+        emit PlayerJoined(_gameId, msg.sender);
     }
 
     /**
@@ -86,7 +80,7 @@ contract IncanGold {
      * @param _winners An array of the winner addresses.
      * @param _payouts An array of payout amounts in wei, corresponding to each winner.
      */
-    function settleGame(uint256 _gameId, address[] memory _winners, uint256[] memory _payouts) public onlyOwner {
+    function settleGame(string memory _gameId, address[] memory _winners, uint256[] memory _payouts) public onlyOwner {
         Game storage game = games[_gameId];
         require(game.isActive, "Game is not active or does not exist");
         require(_winners.length == _payouts.length, "Winners and payouts array length mismatch");
@@ -118,14 +112,14 @@ contract IncanGold {
     /**
      * @dev Returns the list of players for a given game.
      */
-    function getPlayers(uint256 _gameId) public view returns (address[] memory) {
+    function getPlayers(string memory _gameId) public view returns (address[] memory) {
         return games[_gameId].players;
     }
 
     /**
      * @dev Returns the pot amount for a given game.
      */
-    function getPot(uint256 _gameId) public view returns (uint256) {
+    function getPot(string memory _gameId) public view returns (uint256) {
         return games[_gameId].pot;
     }
 }
