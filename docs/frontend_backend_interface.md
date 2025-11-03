@@ -1,29 +1,6 @@
 # 前后端接口
 [飞书云文档](https://icn5bnei7pa7.feishu.cn/wiki/CvlLwbtLsifECgkl1TGcOUeonQe)
 
-## 路由接口
-
-### POST /api/usr/login
-上传用户私钥和用户名
-
-#### 请求格式
-
-```json
-{
-    "privateKey": "string",
-    "usrName": "string"
-}
-```
-
-
-#### 返回格式
-
-```json
-{
-}
-```
-
-
 ## Socket接口
 
 ### 事件处理流程

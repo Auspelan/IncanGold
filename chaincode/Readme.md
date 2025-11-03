@@ -11,7 +11,7 @@ npm install
 
 ## 运行
 - 运行Gannache UI（端口配置应改为8545）
-- HARDFOR策略应修改为London
+- HARDFORK策略应修改为London
 ```bash
 truffle compile
 truffle migrate --network development
