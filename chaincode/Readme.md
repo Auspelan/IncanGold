@@ -7,7 +7,6 @@
 ## 安装依赖库
 ```bash
 npm install
-npm install truffle-assertions
 ```
 
 ## 运行
