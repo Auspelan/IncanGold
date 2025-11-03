@@ -119,6 +119,11 @@ function broadcastGameOver(room) {
   });
 }
 
+function broadcastReturnLobby(room) {
+  if (!io || !room) return;
+  io.to(room.roomId).emit('ReturnLobby', {});
+}
+
 function initSocket(server, options = {}) {
   if (io) return io;
   io = new Server(server, {
@@ -135,14 +140,20 @@ function initSocket(server, options = {}) {
 
     socket.on('ping', () => socket.emit('pong'));
 
-    socket.on('joinRoom', (payload = {}, ack) => {
+    socket.on('joinRoom', async (payload = {}, ack) => {
       console.log('joinRoom payload:', payload);
       try {
         const playerId = payload.playerId || socket.id;
         const playerName = payload.playerName || `Player-${socket.id.slice(-4)}`;
 
         const player = manager.createPlayer(playerId, playerName, socket);
-        manager.addPlayerToQueue(player);
+        const res = await manager.addPlayerToQueue(player);
+        if (!res.ok) {
+          console.error('Failed to add player to queue:', res.error);
+          broadcastReturnLobby(socket);
+          if (typeof ack === 'function') ack({ ok: false, error: res.error });
+          return;
+        }
 
         const joinedRoom = findRoomBySocketId(socket.id);
 

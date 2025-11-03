@@ -3,6 +3,8 @@
 const { Web3 } = require('web3');
 const contractABI = require('../../../chaincode/build/contracts/IncanGold.json').abi;
 
+const validator = require("web3-validator") 
+
 require('dotenv').config();
 
 const web3 = new Web3(process.env.RPC_URL);
@@ -12,13 +14,22 @@ const ownerAccount = web3.eth.accounts.privateKeyToAccount(process.env.OWNER_PRI
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
 const joinGameOnChain = async (gameId, playerAddress) => {
+    // 检查对应地址是否在链上
+    if (!validator.isAddress(playerAddress)) {
+        const msg = `Invalid player address: ${playerAddress}`;
+        console.warn(msg);
+        // 不抛出异常，返回失败信息以避免终止服务
+        return { ok: false, error: msg };
+    }
+    
     try {
         const entryFee = await contract.methods.entryFee().call();
 
         await contract.methods.joinGame(gameId).send({ from: playerAddress, value: entryFee, gas: 500000 });
 
         console.log(`Player ${playerAddress} joined game ${gameId} successfully.`);
-
+        
+        return { ok: true };
     } catch (error) {
         console.error("Error joining game on-chain:", error);
         throw new Error("Blockchain transaction failed.");

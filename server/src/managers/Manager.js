@@ -12,20 +12,23 @@ class GameSessionManager {
   }
 
   // 玩家请求匹配
-  addPlayerToQueue(player) {
+  async addPlayerToQueue(player) {
     // 优先填充已有未满房间
     for (const room of this.rooms.values()) {
       if (!room.isPlayerFull()) {
         room.addPlayer(player);
         if(room.isPlayerFull()){
-          this.startGame(room.roomId);
+          const res = await this.startGame(room.roomId);
+          if(!res.ok){
+            console.error('Failed to start game for room:', room.roomId);
+            return res;
+          }
         }
-        return;
       }
     }
-
     // 否则创建新房间等待其他玩家
     this.createRoom([player]);
+    return { ok: true };
   }
 
   createPlayer(playerId, playerName, socket) {
@@ -46,7 +49,7 @@ class GameSessionManager {
     return room;
   }
 
-  createGame(roomId, players){
+  async createGame(roomId, players){
     const entryFee = '100000000000000000'; // 0.1 ETH in wei
     console.log(`Creating game in room ${roomId} with entry fee: ${entryFee} wei`);
     const settings = { entranceFee: entryFee };
@@ -58,14 +61,28 @@ class GameSessionManager {
     room.game = game;
 
     try{
-      // Notify blockchain about game creation
-      players.forEach(async (player) => {
-        await blockchainService.joinGameOnChain(game.gameId, player.playerId);
-      });
+      // Notify blockchain about game creation — 并行发起并等待全部完成
+      const joinPromises = players.map(player =>
+        blockchainService.joinGameOnChain(game.gameId, player.playerId)
+          .then(res => ({ player, res }))
+          .catch(err => ({ player, res: { ok: false, error: String(err) } }))
+      );
+
+      const results = await Promise.all(joinPromises);
+      const failed = results.filter(r => !r.res || r.res.ok === false);
+      if (failed.length > 0) {
+        failed.forEach(f => {
+          console.warn(`Failed to join game on-chain for player ${f.player.playerName || f.player.playerId}: ${f.res && f.res.error}`);
+        });
+        console.error(`Failed to create game ${game.gameId} due to blockchain join errors.`);
+        this.clearGame(roomId);
+        return { ok: false, errors: failed.map(f => f.res && f.res.error) };
+      }
+
+      return { ok: true };
     } catch (error) {
         console.error('Error creating game:', error);
-    }  
-    return game;
+    }
   }
 
   clearGame(roomId){
@@ -75,6 +92,11 @@ class GameSessionManager {
       room.game = null;
       room.clearReady();
     }
+  }
+
+  clearRoom(roomId) {
+    this.clearGame(roomId);
+    this.rooms.delete(roomId);
   }
 
   getAllRoomIds() {
@@ -105,10 +127,15 @@ class GameSessionManager {
   }
 
   // 人齐开始游戏
-  startGame(roomId){
+  async startGame(roomId){
     const room = this.getRoom(roomId);
     room.clearReady();
-    this.createGame(roomId,room.players);
+    const res = await this.createGame(roomId,room.players);
+    if(!res.ok){
+      console.error('Failed to start game for room:', roomId);
+      return res;
+    }
+    return res;
   }
 
   //玩家作出选择
