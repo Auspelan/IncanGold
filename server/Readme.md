@@ -6,27 +6,20 @@
 ## 安装依赖库
 ```bash
 npm install
-npm install dotenv
+```
+
+## 配置环境变量
+- 在 `server` 目录下创建 `.env`文件，内容参考如下
+```.env
+# Ganache UI运行的区块链网络的RPC URL
+RPC_URL = http://127.0.0.1:8545
+# 部署合约的地址
+CONTRACT_ADDRESS = 0x52e29782E210C470B1293bAbbc269FeFE34A68e4
+# Ganache UI中合约OWNER账户的私钥
+OWNER_PRIVATE_KEY = 0xb94b6c939c7ed234967d1145051f8599378d5da6f81e9eb28a3de3dd9e876e2a
 ```
 
 ## 运行
 ```bash
 npm start
 ```
-
-## dotenv Template
-
-```
-# /home/zephyr/IncanGold/server/.env
-
-# The address of your deployed contract
-CONTRACT_ADDRESS="0x36fDEd6453a5DaA93F5B64c1980C7758a8E6Fe48"
-
-# The private key of the contract OWNER account from Ganache
-# In Ganache, click the key icon next to the first account to copy this
-OWNER_PRIVATE_KEY="your-ganache-owner-private-key-here"
-
-# The RPC URL for your Ganache client
-RPC_URL="http://127.0.0.1:8545"
-```
-
