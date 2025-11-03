@@ -21,7 +21,7 @@
                 <span>位置: {{ player.position }}</span>
               </div>
               <div class="status" v-if="player.hasMadeChoice">
-                已选择: {{ player.choice === 'return' ? '返回营地' : '继续前进' }}
+                已选择
               </div>
               <div class="status" v-else-if="player.isOnRoad">
                 正在探索
