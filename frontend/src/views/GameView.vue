@@ -13,21 +13,19 @@
         <div class="players-card">
           <h3>玩家列表</h3>
           <ul>
-            <li v-for="player in players" :key="player.playerId" :class="{ self: player.playerId === gameStore.playerId }">
-              <div class="name">{{ player.playerName }}</div>
-              <div class="stats">
-                <span>营地: {{ player.goldInCamp }}</span>
-                <span>手上: {{ player.goldCarried }}</span>
-                <span>位置: {{ player.position }}</span>
+            <li
+              v-for="row in playerRows"
+              :key="row.player.playerId"
+              :class="['player-entry', row.status.className, { self: row.player.playerId === gameStore.playerId }]"
+            >
+              <div class="name">
+                {{ row.player.playerName }}
+                <span v-if="row.player.playerId === gameStore.playerId" class="tag">你</span>
               </div>
-              <div class="status" v-if="player.hasMadeChoice">
-                已选择
-              </div>
-              <div class="status" v-else-if="player.isOnRoad">
-                正在探索
-              </div>
-              <div class="status" v-else>
-                营地等待
+              <div class="coins">💰 手上金币: {{ row.player.goldCarried }}</div>
+              <div class="status-line">
+                <span class="emoji">{{ row.status.emoji }}</span>
+                <span>{{ row.status.text }}</span>
               </div>
             </li>
           </ul>
@@ -50,8 +48,29 @@ export default {
   components: { GameStatus, PlayerInfo, GameBoard, PlayerActions },
   setup() {
     const gameStore = useGameStore()
-    const players = computed(() => gameStore.game.players || [])
-    return { gameStore, players }
+
+    const playerRows = computed(() => {
+      const players = gameStore.game.players || []
+      return players.map((player) => {
+        let status = { text: '等待选择', emoji: '🕒', className: 'awaiting' }
+
+        if (player.hasMadeChoice) {
+          if (player.choice === 'advance') {
+            status = { text: '已决定继续探索', emoji: '🏃', className: 'decided-forward' }
+          } else if (player.choice === 'return') {
+            status = { text: '已决定返回营地', emoji: '🏕️', className: 'decided-retreat' }
+          } else {
+            status = { text: '已完成选择', emoji: '✅', className: 'decided-ready' }
+          }
+        } else if (!player.isOnRoad) {
+          status = { text: '营地休整中', emoji: '⛺', className: 'camping' }
+        }
+
+        return { player, status }
+      })
+    })
+
+    return { gameStore, playerRows }
   }
 }
 </script>
@@ -108,35 +127,77 @@ ul {
   margin: 0;
 }
 
-li {
+.player-entry {
   border: 1px solid #f0f2f5;
   border-radius: 8px;
-  padding: 10px;
+  padding: 10px 12px;
   margin-bottom: 8px;
   background: #fafafa;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-li.self {
+.player-entry.self {
   border-color: #4dabf7;
   background: #e8f4ff;
 }
 
+.player-entry.awaiting {
+  border-color: #f59f00;
+  background: #fff7e6;
+}
+
+.player-entry.decided-forward {
+  border-color: #2f9e44;
+  background: #e9f7ef;
+}
+
+.player-entry.decided-retreat {
+  border-color: #748ffc;
+  background: #eef2ff;
+}
+
+.player-entry.decided-ready {
+  border-color: #51cf66;
+  background: #ecfdf3;
+}
+
+.player-entry.camping {
+  border-color: #adb5bd;
+  background: #f1f3f5;
+}
+
 .name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
 }
 
-.stats {
-  display: flex;
-  gap: 8px;
+.tag {
+  background: #4dabf7;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
   font-size: 12px;
-  color: #555;
-  margin-top: 6px;
 }
 
-.status {
-  font-size: 12px;
-  color: #8a8a8a;
+.coins {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #444;
+}
+
+.status-line {
   margin-top: 4px;
+  font-size: 12px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.emoji {
+  font-size: 14px;
 }
 
 @media (max-width: 820px) {

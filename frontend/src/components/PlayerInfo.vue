@@ -3,7 +3,6 @@
     <h3>我的状态</h3>
     <div class="row"><span>营地金币</span><strong>{{ player.goldInCamp }}</strong></div>
     <div class="row"><span>手中金币</span><strong>{{ player.goldCarried }}</strong></div>
-    <div class="row"><span>当前位置</span><strong>{{ player.position }}</strong></div>
   </div>
   <div class="player-info" v-else>
     <h3>我的状态</h3>

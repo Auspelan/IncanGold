@@ -50,7 +50,7 @@ class GameSessionManager {
   }
 
   async createGame(roomId, players){
-    const entryFee = '100000000000000000'; // 0.1 ETH in wei
+    const entryFee = '10000000000000000'; // 0.01 ETH in wei
     console.log(`Creating game in room ${roomId} with entry fee: ${entryFee} wei`);
     const settings = { entranceFee: entryFee };
     

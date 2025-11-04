@@ -10,11 +10,21 @@
       </label>
       <label>
         地址
-        <input v-model.trim="gameStore.playerId" placeholder="输入你的账户的区块链地址" />
+        <input v-model.trim="gameStore.playerAccount" placeholder="输入你的账户的区块链地址" />
       </label>
-      <label>
+      <label class="fee-label">
         入场费
-        <input v-model.number="gameStore.entranceFee" type="number" min="0" />
+        <div class="fee-selector">
+          <button
+            v-for="option in feeOptions"
+            :key="option.value"
+            type="button"
+            :class="['fee-option', { active: isSelected(option.value) }]"
+            @click="selectFee(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        </div>
       </label>
     </div>
 
@@ -60,7 +70,18 @@ export default {
       return true
     })
 
-    return { gameStore, joinLabel, canJoin }
+    const feeOptions = computed(() => gameStore.entranceFeeOptions.map(value => ({
+      value,
+      label: `${value} ETH`
+    })))
+
+    const selectFee = (value) => {
+      gameStore.setEntranceFee(value)
+    }
+
+    const isSelected = (value) => gameStore.entranceFee === value
+
+    return { gameStore, joinLabel, canJoin, feeOptions, selectFee, isSelected }
   }
 }
 </script>
@@ -97,6 +118,39 @@ label {
 input {
   margin-top: 6px;
   width: 200px;
+}
+
+.fee-label {
+  align-items: flex-start;
+}
+
+.fee-selector {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.fee-option {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #d0d7de;
+  background: #fff;
+  color: #333;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fee-option:hover {
+  border-color: #4dabf7;
+  color: #1c7ed6;
+}
+
+.fee-option.active {
+  background: #1c7ed6;
+  color: #fff;
+  border-color: #1c7ed6;
+  box-shadow: 0 0 0 2px rgba(28, 126, 214, 0.15);
 }
 
 .actions {

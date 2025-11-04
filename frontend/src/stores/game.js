@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { initSocket, getSocket, on, safeEmit } from '../socket'
 
+const ENTRANCE_FEE_OPTIONS = ['0.01', '0.1', '1']
+const DEFAULT_ENTRANCE_ETH = ENTRANCE_FEE_OPTIONS[0]
+
 const EVENT_MESSAGE_BUILDERS = {
   reward: ({ gained = 0 } = {}) => gained > 0
     ? `探险有成，获得 ${gained} 个金币！`
@@ -91,7 +94,10 @@ function initialState() {
     connectionError: null,
     phase: 'lobby', // 'lobby' | 'room' | 'game' | 'result'
     playerName: '',
-    entranceFee: 100,
+    playerAccount: '',
+    playerId: null,
+    socketId: null,
+    entranceFee: DEFAULT_ENTRANCE_ETH,
     roomId: null,
     roomPlayers: [],
     roomReadyPlayers: [],
@@ -111,6 +117,12 @@ function initialState() {
 export const useGameStore = defineStore('game', {
   state: initialState,
   getters: {
+    entranceFeeOptions() {
+      return ENTRANCE_FEE_OPTIONS
+    },
+    defaultEntranceEth() {
+      return DEFAULT_ENTRANCE_ETH
+    },
     selfPlayer(state) {
       return state.game.players.find(p => p.playerId === state.playerId) || null
     },
@@ -135,10 +147,14 @@ export const useGameStore = defineStore('game', {
         const socket = getSocket()
         this.isConnected = true
         this.connectionError = null
+        if (socket?.id) {
+          this.socketId = socket.id
+        }
       })
 
       on('disconnect', () => {
         this.isConnected = false
+        this.socketId = null
       })
 
       on('connect_error', (err) => {
@@ -212,11 +228,15 @@ export const useGameStore = defineStore('game', {
       on('returnLobby', () => {
         const keepName = this.playerName
         const keepFee = this.entranceFee
+        const keepId = this.playerId
+        const keepAccount = this.playerAccount
         this.clearGameStartTimer()
         this.setEventMessage('', 0)
         this.$reset()
         this.playerName = keepName
         this.entranceFee = keepFee
+        this.playerAccount = keepAccount
+        this.playerId = keepId || this.playerId
       })
     },
 
@@ -355,16 +375,23 @@ export const useGameStore = defineStore('game', {
       if (!this.playerName) return
 
       const socket = getSocket()
-      const playerId = this.playerId || socket?.id
+      const manualId = (this.playerAccount || '').trim()
+      const fallbackId = this.socketId || socket?.id || this.playerId
+      const playerId = manualId || fallbackId
       if (!playerId) return
 
+      if (manualId) {
+        this.playerAccount = manualId
+      }
+
+      this.playerId = playerId
       this.isJoining = true
       this.connectionError = null
 
       safeEmit('joinRoom', {
         playerId,
         playerName: this.playerName,
-        entranceFee: Number(this.entranceFee) || 0
+        entranceFee: Number(DEFAULT_ENTRANCE_ETH)
       }, (ack) => {
         this.isJoining = false
 
@@ -448,10 +475,15 @@ export const useGameStore = defineStore('game', {
         if (!ack?.ok) {
           this.connectionError = ack?.error || '继续游戏失败'
         } else if (ack.waiting) {
+          if (Array.isArray(ack.readyPlayers)) {
+            this.roomReadyPlayers = ack.readyPlayers.slice()
+          }
           const waitingMessage = ack.roomFull
             ? '已选择继续游戏，等待其他玩家确认...'
             : '房间人数不足，等待其他玩家加入...'
           this.setEventMessage(waitingMessage, 2500)
+        } else if (Array.isArray(ack.readyPlayers)) {
+          this.roomReadyPlayers = ack.readyPlayers.slice()
         }
       })
     },
@@ -459,12 +491,16 @@ export const useGameStore = defineStore('game', {
     leaveRoom() {
       const keepName = this.playerName
       const keepFee = this.entranceFee
+      const keepId = this.playerId
+      const keepAccount = this.playerAccount
 
       if (!this.roomId || !this.playerId) {
         this.clearGameStartTimer()
         this.$reset()
         this.playerName = keepName
         this.entranceFee = keepFee
+        this.playerAccount = keepAccount
+        this.playerId = keepId || this.playerId
         return
       }
 
@@ -480,6 +516,8 @@ export const useGameStore = defineStore('game', {
         this.$reset()
         this.playerName = keepName
         this.entranceFee = keepFee
+        this.playerAccount = keepAccount
+        this.playerId = keepId || this.playerId
       })
     },
 
@@ -492,6 +530,16 @@ export const useGameStore = defineStore('game', {
       Object.assign(this, next)
       this.socketReady = true
       this.isConnected = socketConnected
+      this.socketId = socketId
+    },
+
+    setEntranceFee(value) {
+      const normalized = String(value ?? '').trim()
+      if (ENTRANCE_FEE_OPTIONS.includes(normalized)) {
+        this.entranceFee = normalized
+      } else {
+        this.entranceFee = DEFAULT_ENTRANCE_ETH
+      }
     }
   }
 })
