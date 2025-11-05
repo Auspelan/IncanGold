@@ -75,8 +75,11 @@ export default {
 
 :root {
   color-scheme: dark;
-  --bg-base: #050b14;
-  --bg-gradient: radial-gradient(circle at 16% -10%, rgba(244, 193, 93, 0.26) 0%, rgba(7, 12, 24, 0.92) 60%, rgba(3, 6, 13, 1) 100%);
+  --bg-base: #040a18;
+  --bg-layer-soft: linear-gradient(180deg, rgba(10, 18, 34, 0.96) 0%, rgba(6, 12, 24, 0.98) 55%, #02050c 100%);
+  --bg-highlight-top: radial-gradient(ellipse at 14% -18%, rgba(244, 193, 93, 0.32) 0%, rgba(12, 20, 36, 0) 55%);
+  --bg-highlight-bottom: radial-gradient(ellipse at 50% 118%, rgba(44, 74, 128, 0.18) 0%, rgba(5, 11, 22, 0) 62%);
+  --bg-falloff: linear-gradient(180deg, rgba(8, 15, 30, 0) 0%, rgba(8, 15, 30, 0.55) 65%, rgba(8, 15, 30, 0.82) 100%);
   --panel-bg: rgba(13, 20, 36, 0.78);
   --panel-border: rgba(244, 193, 93, 0.22);
   --panel-shadow: 0 28px 65px -40px rgba(3, 8, 17, 0.85);
@@ -108,10 +111,22 @@ html, body {
 
 body {
   margin: 0;
-  background: var(--bg-gradient), var(--bg-base);
+  background-color: var(--bg-base);
   font-family: var(--font-body, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif);
   color: var(--text-secondary);
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image: var(--bg-highlight-top), var(--bg-highlight-bottom), var(--bg-falloff), var(--bg-layer-soft);
+  background-repeat: no-repeat;
+  background-size: 130% 130%, 140% 140%, 100% 100%, 100% 100%;
 }
 
 #app {

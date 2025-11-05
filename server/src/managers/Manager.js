@@ -5,7 +5,7 @@ const Player = require('../models/player');
 const blockchainService = require('../services/blockchain.service');
 
 class GameSessionManager {
-  constructor() {ç
+  constructor() {
     this.rooms = new Map(); // roomId -> Room
     this.games = new Map(); // gameId -> Game
     this.players = new Map(); // playerId -> Player
