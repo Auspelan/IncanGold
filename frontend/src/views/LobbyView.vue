@@ -1,5 +1,12 @@
 <template>
   <section class="lobby glass-panel">
+    <div class="hero-canvas" aria-hidden="true">
+      <div class="hero-orb orb-one"></div>
+      <div class="hero-orb orb-two"></div>
+      <div class="hero-glyph"></div>
+      <div class="hero-ring ring-a"></div>
+      <div class="hero-ring ring-b"></div>
+    </div>
     <header class="section-header">
       <div class="titles">
         <h2>🏠 冒险大厅</h2>
@@ -162,17 +169,98 @@ export default {
 
 <style scoped>
 .lobby {
+  position: relative;
+  overflow: hidden;
   padding: 32px 36px;
   display: flex;
   flex-direction: column;
   gap: 28px;
 }
 
+.hero-canvas {
+  position: absolute;
+  inset: -60px -80px -40px;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(0.2px);
+}
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  opacity: 0.5;
+  animation: heroOrbFloat 18s ease-in-out infinite;
+}
+
+.hero-orb.orb-one {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle at 40% 40%, rgba(244, 193, 93, 0.45), rgba(244, 193, 93, 0));
+  top: 4%;
+  left: 6%;
+}
+
+.hero-orb.orb-two {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle at 60% 60%, rgba(56, 189, 248, 0.38), rgba(56, 189, 248, 0));
+  bottom: -6%;
+  right: -4%;
+  animation-duration: 22s;
+  animation-delay: -6s;
+}
+
+.hero-glyph {
+  position: absolute;
+  inset: 28% 45% 30% 10%;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 193, 93, 0.28);
+  box-shadow: 0 0 60px rgba(244, 193, 93, 0.26);
+  opacity: 0.45;
+  animation: heroPulse 12s ease-in-out infinite alternate;
+}
+
+.hero-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(120, 141, 176, 0.38);
+  opacity: 0.28;
+  animation: heroRingSpin 18s linear infinite;
+}
+
+.hero-ring.ring-a {
+  inset: 14% 35% 46% -6%;
+}
+
+.hero-ring.ring-b {
+  inset: 46% -14% 8% 48%;
+  animation-duration: 28s;
+}
+
 .section-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
+}
+
+@keyframes heroOrbFloat {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.45; }
+  50% { transform: translate3d(12px, -10px, 0) scale(1.08); opacity: 0.55; }
+  100% { transform: translate3d(-14px, 14px, 0) scale(1); opacity: 0.45; }
+}
+
+@keyframes heroPulse {
+  0% { transform: scale(0.92); opacity: 0.35; }
+  100% { transform: scale(1.05); opacity: 0.55; }
+}
+
+@keyframes heroRingSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .section-header h2 {
@@ -190,6 +278,8 @@ export default {
 }
 
 .lobby-body {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
   gap: 28px;

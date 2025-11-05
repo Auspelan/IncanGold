@@ -183,13 +183,38 @@ h2 {
 }
 
 .scoreboard li {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 14px 16px;
   border-radius: var(--radius-md);
-  background: rgba(16, 24, 38, 0.88);
+  background: linear-gradient(150deg, rgba(16, 24, 38, 0.92) 0%, rgba(10, 18, 32, 0.82) 100%);
   border: 1px solid rgba(120, 141, 176, 0.28);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.scoreboard li::after {
+  content: '';
+  position: absolute;
+  inset: -120%;
+  background: radial-gradient(circle, rgba(244, 193, 93, 0.35) 0%, transparent 55%);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  mix-blend-mode: screen;
+}
+
+.scoreboard li:hover {
+  transform: translateY(-2px);
+  border-color: rgba(244, 193, 93, 0.35);
+  box-shadow: 0 16px 30px -26px rgba(244, 193, 93, 0.65);
+}
+
+.scoreboard li:hover::after {
+  opacity: 0.55;
+  transform: scale(1);
 }
 
 .row-primary {

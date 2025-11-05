@@ -1,5 +1,10 @@
 <template>
-  <div id="app">
+  <div id="app" :class="['app-shell', themeClass]">
+    <div class="background-frame" aria-hidden="true">
+      <div class="background-layer aurora"></div>
+      <div class="background-layer grid"></div>
+      <div class="background-layer dust"></div>
+    </div>
     <header class="app-header glass-panel">
       <div class="brand">
         <span class="brand-glyph">🪙</span>
@@ -65,7 +70,17 @@ export default {
       return mapping[gameStore.phase] || LobbyView
     })
 
-    return { gameStore, phaseComponent }
+    const themeClass = computed(() => {
+      const mapping = {
+        lobby: 'phase-lobby',
+        room: 'phase-room',
+        game: 'phase-game',
+        result: 'phase-result'
+      }
+      return mapping[gameStore.phase] || 'phase-lobby'
+    })
+
+    return { gameStore, phaseComponent, themeClass }
   }
 }
 </script>
@@ -99,6 +114,10 @@ export default {
   --radius-md: 16px;
   --radius-sm: 12px;
   --transition-fast: 0.22s ease;
+  --aurora-top: rgba(244, 193, 93, 0.32);
+  --aurora-bottom: rgba(104, 184, 255, 0.18);
+  --grid-glow: rgba(244, 193, 93, 0.12);
+  --dust-color: rgba(255, 255, 255, 0.12);
 }
 
 *, *::before, *::after {
@@ -129,8 +148,113 @@ body::before {
   background-size: 130% 130%, 140% 140%, 100% 100%, 100% 100%;
 }
 
-#app {
-  max-width: 1040px;
+.background-frame {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.background-layer {
+  position: absolute;
+  inset: -20% -25%;
+  will-change: transform, opacity;
+  transition: opacity 1.2s ease;
+  filter: saturate(120%);
+}
+
+.background-layer.aurora {
+  background: radial-gradient(60% 60% at 20% 20%, var(--aurora-top) 0%, rgba(12, 20, 36, 0) 72%),
+              radial-gradient(70% 70% at 78% 40%, var(--aurora-bottom) 0%, rgba(12, 20, 36, 0) 75%);
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  animation: auroraShift 24s ease-in-out infinite alternate;
+}
+
+.background-layer.grid {
+  background-image: linear-gradient(120deg, transparent 0 46%, var(--grid-glow) 48%, transparent 50%),
+    linear-gradient(-120deg, transparent 0 46%, var(--grid-glow) 48%, transparent 50%);
+  background-size: 420px 420px;
+  opacity: 0.16;
+  mix-blend-mode: screen;
+  animation: gridPulse 18s linear infinite;
+}
+
+.background-layer.dust {
+  background-image: radial-gradient(circle at 24% 30%, var(--dust-color) 0 1px, transparent 1px),
+    radial-gradient(circle at 68% 82%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px),
+    radial-gradient(circle at 82% 24%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px);
+  background-size: 360px 360px, 520px 520px, 440px 440px;
+  opacity: 0.4;
+  animation: dustDrift 38s linear infinite;
+}
+
+.app-shell {
+  position: relative;
+  z-index: 0;
+}
+
+
+.app-shell.phase-lobby {
+  --aurora-top: rgba(244, 193, 93, 0.34);
+  --aurora-bottom: rgba(104, 184, 255, 0.2);
+  --grid-glow: rgba(244, 193, 93, 0.14);
+  --dust-color: rgba(255, 255, 255, 0.12);
+}
+.app-shell.phase-room {
+  --accent: #7dd3fc;
+  --accent-strong: #bae6fd;
+  --chip-bg: rgba(125, 211, 252, 0.18);
+  --chip-border: rgba(125, 211, 252, 0.38);
+  --aurora-top: rgba(99, 210, 255, 0.35);
+  --aurora-bottom: rgba(49, 120, 255, 0.28);
+  --grid-glow: rgba(125, 211, 252, 0.12);
+  --dust-color: rgba(200, 235, 255, 0.14);
+}
+
+.app-shell.phase-game {
+  --accent: #f97316;
+  --accent-strong: #fb923c;
+  --chip-bg: rgba(251, 146, 60, 0.18);
+  --chip-border: rgba(251, 146, 60, 0.4);
+  --aurora-top: rgba(252, 165, 94, 0.35);
+  --aurora-bottom: rgba(244, 63, 94, 0.25);
+  --grid-glow: rgba(253, 186, 116, 0.12);
+  --dust-color: rgba(255, 204, 173, 0.14);
+}
+
+.app-shell.phase-result {
+  --accent: #a855f7;
+  --accent-strong: #c084fc;
+  --chip-bg: rgba(168, 85, 247, 0.2);
+  --chip-border: rgba(168, 85, 247, 0.42);
+  --aurora-top: rgba(168, 85, 247, 0.32);
+  --aurora-bottom: rgba(56, 189, 248, 0.24);
+  --grid-glow: rgba(196, 116, 255, 0.14);
+  --dust-color: rgba(216, 180, 254, 0.16);
+}
+
+@keyframes auroraShift {
+  0% { transform: translate3d(-4%, -6%, 0) scale(1.08); opacity: 0.78; }
+  50% { transform: translate3d(2%, 4%, 0) scale(1.04); opacity: 0.9; }
+  100% { transform: translate3d(6%, -2%, 0) scale(1.1); opacity: 0.8; }
+}
+
+@keyframes gridPulse {
+  0% { transform: translate3d(0, 0, 0); opacity: 0.12; }
+  50% { transform: translate3d(-2%, -3%, 0); opacity: 0.18; }
+  100% { transform: translate3d(-4%, -6%, 0); opacity: 0.12; }
+}
+
+@keyframes dustDrift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -3%, 0) scale(1.06); }
+  100% { transform: translate3d(-3%, -6%, 0) scale(1.1); }
+}
+
+.app-shell {
+  max-width: 1100px;
   margin: 0 auto;
   padding: 36px 30px 48px;
   display: flex;
@@ -155,6 +279,11 @@ p {
   border-radius: var(--radius-lg);
   box-shadow: var(--panel-shadow);
   backdrop-filter: blur(18px);
+}
+
+.view-host {
+  position: relative;
+  z-index: 1;
 }
 
 .glass-chip {
@@ -190,6 +319,8 @@ p {
 }
 
 .app-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -357,7 +488,7 @@ input:focus, select:focus {
 }
 
 @media (max-width: 960px) {
-  #app {
+  .app-shell {
     padding: 28px 20px 36px;
   }
   .app-header {

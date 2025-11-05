@@ -158,14 +158,71 @@ export default {
 }
 
 .player-entry {
+  position: relative;
+  overflow: hidden;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(120, 141, 176, 0.25);
-  background: rgba(16, 24, 38, 0.85);
+  border: 1px solid rgba(120, 141, 176, 0.28);
+  background: linear-gradient(145deg, rgba(16, 24, 38, 0.9) 0%, rgba(10, 18, 32, 0.78) 100%);
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.player-entry::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle, rgba(244, 193, 93, 0.28), transparent 60%);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.player-entry:hover {
+  transform: translateY(-2px);
+  border-color: rgba(244, 193, 93, 0.45);
+  box-shadow: 0 14px 30px -24px rgba(244, 193, 93, 0.65);
+}
+
+.player-entry:hover::after {
+  opacity: 0.55;
+  transform: scale(1);
+}
+
+.player-entry.awaiting {
+  border-color: rgba(125, 211, 252, 0.28);
+}
+
+.player-entry.decided-forward {
+  border-color: rgba(74, 222, 128, 0.35);
+  animation: entryPulse 2.6s ease-in-out infinite;
+}
+
+.player-entry.decided-retreat {
+  border-color: rgba(248, 113, 113, 0.32);
+}
+
+.player-entry.decided-ready {
+  border-color: rgba(244, 193, 93, 0.38);
+}
+
+.player-entry.camping {
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.player-entry.self {
+  border-color: rgba(244, 193, 93, 0.48);
+  box-shadow: 0 0 0 1px rgba(244, 193, 93, 0.3);
+}
+
+@keyframes entryPulse {
+  0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.18); }
+  50% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
 }
 
 .player-entry.self {
