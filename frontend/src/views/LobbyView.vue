@@ -1,47 +1,78 @@
 <template>
-  <section class="lobby">
-    <h2>游戏大厅</h2>
-    <p class="subtitle">输入昵称与入场费后加入匹配，集齐 3 名玩家即可开始游戏。</p>
+  <section class="lobby glass-panel">
+    <header class="section-header">
+      <div class="titles">
+        <h2>🏠 链上冒险大厅</h2>
+        <p class="subtitle">输入个人信息与入场费，集结 3 名探险家即可启程。</p>
+      </div>
+      <div v-if="pill" class="status-pill glass-chip">
+        <span class="chip-label">{{ pill.label }}</span>
+        <span class="chip-value">{{ pill.value }}</span>
+      </div>
+    </header>
 
-    <div class="form-grid">
-      <label>
-        昵称
-        <input v-model.trim="gameStore.playerName" placeholder="输入你的名字" />
-      </label>
-      <label>
-        地址
-        <input v-model.trim="gameStore.playerAccount" placeholder="输入你的账户的区块链地址" />
-      </label>
-      <label class="fee-label">
-        入场费
-        <div class="fee-selector">
-          <button
-            v-for="option in feeOptions"
-            :key="option.value"
-            type="button"
-            :class="['fee-option', { active: isSelected(option.value) }]"
-            @click="selectFee(option.value)"
-          >
-            {{ option.label }}
-          </button>
+    <div class="lobby-body">
+      <form class="join-form" @submit.prevent="gameStore.joinRoom">
+        <div class="field-grid">
+          <label>
+            昵称
+            <input v-model.trim="gameStore.playerName" placeholder="输入你的名字" />
+          </label>
+          <label>
+            钱包地址
+            <input v-model.trim="gameStore.playerAccount" placeholder="输入账户地址" />
+          </label>
         </div>
-      </label>
-    </div>
 
-    <div class="actions">
-      <button @click="gameStore.joinRoom" :disabled="!canJoin">{{ joinLabel }}</button>
-    </div>
+        <div class="fee-block">
+          <span class="fee-label">入场费</span>
+          <div class="fee-selector">
+            <button
+              v-for="option in feeOptions"
+              :key="option.value"
+              type="button"
+              class="fee-option"
+              :class="{ active: isSelected(option.value) }"
+              @click="selectFee(option.value)"
+            >
+              <span class="value">{{ option.label }}</span>
+              <span class="note">{{ option.note }}</span>
+            </button>
+          </div>
+        </div>
 
-    <p v-if="!gameStore.isConnected" class="hint">未连接到服务器，请稍候...</p>
-    <p v-else-if="gameStore.isQueued" class="hint">已加入匹配队列，等待其他玩家...</p>
+        <div class="actions">
+          <button type="submit" :disabled="!canJoin">{{ joinLabel }}</button>
+          <button
+            v-if="gameStore.playerAccount"
+            type="button"
+            class="secondary ghost"
+            @click="resetAccount"
+          >清除地址</button>
+        </div>
 
-    <div v-if="gameStore.roomPlayers.length" class="waiting-card">
-      <h3>已加入玩家 ({{ gameStore.roomPlayers.length }}/3)</h3>
-      <ul>
-        <li v-for="player in gameStore.roomPlayers" :key="player.playerId">
-          {{ player.playerName }}
-        </li>
-      </ul>
+        <p v-if="!gameStore.isConnected" class="connection-hint warning">未连接到服务器，请稍候...</p>
+        <p v-else-if="gameStore.isQueued" class="connection-hint">已加入匹配队列，等待其他玩家...</p>
+        <p v-else class="connection-hint subtle">准备就绪，点击加入即可开始匹配。</p>
+      </form>
+
+      <aside class="lobby-sidebar">
+        <h3>当前房间</h3>
+        <p class="sidebar-copy">房间号：<strong>{{ roomLabel }}</strong></p>
+        <ul v-if="gameStore.roomPlayers.length" class="player-list">
+          <li v-for="player in gameStore.roomPlayers" :key="player.playerId">
+            <span class="avatar">{{ initials(player.playerName) }}</span>
+            <div class="player-copy">
+              <span class="name">{{ player.playerName }}</span>
+              <span class="meta">ID {{ player.playerId.slice(-4) }}</span>
+            </div>
+          </li>
+        </ul>
+        <div v-else class="placeholder">
+          <span>暂无玩家加入</span>
+          <small>等待先锋探险家加入队伍</small>
+        </div>
+      </aside>
     </div>
   </section>
 </template>
@@ -65,15 +96,15 @@ export default {
     const canJoin = computed(() => {
       if (!gameStore.isConnected) return false
       if (!gameStore.playerName) return false
-      if (gameStore.isJoining) return false
-      if (gameStore.isQueued) return false
+      if (gameStore.isJoining || gameStore.isQueued) return false
       return true
     })
 
-    const feeOptions = computed(() => gameStore.entranceFeeOptions.map(value => ({
-      value,
-      label: `${value} ETH`
-    })))
+    const feeOptions = computed(() => [
+      { value: '0.01', label: '0.01 ETH', note: 'Basic' },
+      { value: '0.1', label: '0.1 ETH', note: 'Intermediate' },
+      { value: '1', label: '1 ETH', note: 'Advanced' }
+    ])
 
     const selectFee = (value) => {
       gameStore.setEntranceFee(value)
@@ -81,108 +112,292 @@ export default {
 
     const isSelected = (value) => gameStore.entranceFee === value
 
-    return { gameStore, joinLabel, canJoin, feeOptions, selectFee, isSelected }
+    const roomLabel = computed(() => gameStore.roomId || (gameStore.isQueued ? '匹配中' : '尚未分配'))
+
+    const pill = computed(() => {
+      if (gameStore.isQueued) {
+        return {
+          label: '匹配中',
+          value: `${gameStore.roomPlayers.length}/3 位探险家`
+        }
+      }
+      if (gameStore.roomPlayers.length) {
+        return {
+          label: '房间就绪',
+          value: `${gameStore.roomPlayers.length}/3`
+        }
+      }
+      return null
+    })
+
+    const initials = (name = '') => {
+      const trimmed = name.trim()
+      if (!trimmed) return '探'
+      const tokens = trimmed.split(/\s+/)
+      if (tokens.length > 1) {
+        return `${tokens[0][0]}${tokens[1][0]}`.toUpperCase()
+      }
+      return trimmed.slice(0, 2).toUpperCase()
+    }
+
+    const resetAccount = () => {
+      gameStore.playerAccount = ''
+    }
+
+    return {
+      gameStore,
+      joinLabel,
+      canJoin,
+      feeOptions,
+      selectFee,
+      isSelected,
+      roomLabel,
+      pill,
+      initials,
+      resetAccount
+    }
   }
 }
 </script>
 
 <style scoped>
 .lobby {
-  text-align: center;
-  padding: 24px;
-  background: #fafbfc;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.section-header h2 {
+  font-size: 26px;
 }
 
 .subtitle {
-  color: #666;
+  margin-top: 6px;
   font-size: 14px;
-  margin-bottom: 18px;
+  color: var(--text-muted);
 }
 
-.form-grid {
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-  margin-bottom: 16px;
+.status-pill {
+  align-self: flex-start;
 }
 
-label {
+.lobby-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 28px;
+}
+
+.join-form {
   display: flex;
   flex-direction: column;
-  font-size: 14px;
-  color: #444;
+  gap: 24px;
 }
 
-input {
-  margin-top: 6px;
-  width: 200px;
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.fee-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .fee-label {
-  align-items: flex-start;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
 .fee-selector {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  margin-top: 6px;
 }
 
 .fee-option {
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid #d0d7de;
-  background: #fff;
-  color: #333;
-  font-size: 13px;
+  flex: 1 1 120px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(16, 26, 44, 0.85);
+  border: 1px solid rgba(120, 141, 176, 0.35);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.fee-option .value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fee-option .note {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .fee-option:hover {
-  border-color: #4dabf7;
-  color: #1c7ed6;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px -18px rgba(244, 193, 93, 0.45);
 }
 
 .fee-option.active {
-  background: #1c7ed6;
-  color: #fff;
-  border-color: #1c7ed6;
-  box-shadow: 0 0 0 2px rgba(28, 126, 214, 0.15);
+  border-color: var(--accent);
+  background: rgba(244, 193, 93, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(244, 193, 93, 0.25);
 }
 
 .actions {
-  margin: 20px 0;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.hint {
-  color: #666;
-  margin-top: 12px;
+button.ghost {
+  color: var(--text-secondary);
 }
 
-.waiting-card {
-  margin-top: 20px;
-  text-align: left;
-  border: 1px solid #dfe3e8;
-  border-radius: 8px;
-  padding: 12px 16px;
-  background: #fff;
+.connection-hint {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
-.waiting-card h3 {
-  margin: 0 0 10px;
-  font-size: 16px;
+.connection-hint.warning {
+  color: var(--warning);
 }
 
-ul {
+.connection-hint.subtle {
+  color: rgba(183, 197, 242, 0.7);
+}
+
+.lobby-sidebar {
+  padding: 22px 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(120, 141, 176, 0.35);
+  background: rgba(10, 18, 32, 0.72);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lobby-sidebar h3 {
+  font-size: 18px;
+}
+
+.sidebar-copy {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.player-list {
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-li + li {
-  margin-top: 4px;
+.player-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(16, 24, 38, 0.85);
+  border: 1px solid rgba(120, 141, 176, 0.28);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(244, 193, 93, 0.18);
+  border: 1px solid rgba(244, 193, 93, 0.28);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.player-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.player-copy .name {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.player-copy .meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.placeholder {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.placeholder small {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 960px) {
+  .lobby {
+    padding: 28px 24px;
+  }
+  .lobby-body {
+    grid-template-columns: 1fr;
+  }
+  .lobby-sidebar {
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+  .fee-selector {
+    flex-direction: column;
+  }
+  .fee-option {
+    width: 100%;
+  }
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .status-pill {
+    align-self: stretch;
+  }
 }
 </style>

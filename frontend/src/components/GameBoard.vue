@@ -94,10 +94,17 @@ export default {
 
 <style scoped>
 .board {
-  border: 1px solid #e1e4e8;
-  border-radius: 12px;
-  padding: 16px;
-  background: #fff;
+  border: 1px solid rgba(120, 141, 176, 0.3);
+  border-radius: var(--radius-md);
+  background: rgba(10, 18, 32, 0.78);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.board h3 {
+  font-size: 18px;
 }
 
 .grid {
@@ -113,33 +120,38 @@ export default {
 .tile {
   min-width: 70px;
   min-height: 70px;
-  border: 1px solid #dfe3e6;
-  border-radius: 10px;
+  border: 1px solid rgba(120, 141, 176, 0.28);
+  border-radius: var(--radius-sm);
   padding: 10px;
-  background: #f9fafb;
+  background: rgba(16, 24, 38, 0.88);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   font-size: 13px;
+  color: var(--text-secondary);
+  box-shadow: inset 0 0 12px rgba(8, 15, 26, 0.35);
 }
 
 .camp {
-  background: #eaf7f0;
-  border-color: #b8e0c6;
+  background: rgba(27, 46, 42, 0.9);
+  border-color: rgba(74, 222, 128, 0.35);
+  color: #9de3b2;
 }
 
 .trap {
-  background: #fff1f0;
-  border-color: #f5c6c6;
+  background: rgba(63, 33, 38, 0.9);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: var(--danger);
 }
 
 .current {
-  box-shadow: 0 0 0 2px #4dabf7 inset;
+  box-shadow: 0 0 0 2px rgba(244, 193, 93, 0.35), inset 0 0 12px rgba(244, 193, 93, 0.18);
 }
 
 .pos {
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .players {
@@ -150,34 +162,38 @@ export default {
 }
 
 .players span {
-  background: rgba(45, 127, 249, 0.12);
-  color: #2d7ff9;
+  background: rgba(244, 193, 93, 0.18);
+  color: var(--accent);
   padding: 2px 6px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
+  border: 1px solid rgba(244, 193, 93, 0.28);
 }
 
 .camp .players span {
-  background: rgba(76, 175, 80, 0.15);
-  color: #2b8a3e;
+  background: rgba(74, 222, 128, 0.18);
+  border-color: rgba(74, 222, 128, 0.35);
+  color: var(--text-primary);
 }
 
 .gold {
-  color: #555;
+  color: var(--text-muted);
 }
 
 .trap-label {
-  color: #e74c3c;
+  color: var(--danger);
   font-weight: 600;
 }
 
 .unknown {
-  background: #f3f4f6;
-  color: #888;
+  background: rgba(35, 44, 62, 0.8);
+  color: var(--text-muted);
   font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(120, 141, 176, 0.32);
 }
 
 </style>

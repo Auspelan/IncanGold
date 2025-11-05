@@ -50,39 +50,56 @@ export default {
 
 <style scoped>
 .actions {
-  border: 1px solid #e1e4e8;
-  padding: 16px;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid rgba(120, 141, 176, 0.28);
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: rgba(10, 18, 32, 0.78);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+.actions h3 {
+  font-size: 18px;
 }
 
 .desc {
-  color: #666;
+  color: var(--text-muted);
   font-size: 13px;
-  margin-bottom: 12px;
 }
 
 .buttons {
   display: flex;
   gap: 12px;
   justify-content: center;
-  margin-bottom: 10px;
+}
+
+.buttons button {
+  flex: 1;
+  min-width: 140px;
 }
 
 .buttons button.locked {
-  background: #f0f2f5;
-  color: #999;
+  opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .buttons button.blocked {
-  background: #f5f8ff;
-  color: #5470c6;
+  background: rgba(45, 63, 104, 0.7);
+  color: var(--text-primary);
+  border: 1px solid rgba(84, 105, 150, 0.45);
 }
 
 .hint {
-  color: #888;
-  font-size: 13px;
-  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 520px) {
+  .buttons {
+    flex-direction: column;
+  }
 }
 </style>

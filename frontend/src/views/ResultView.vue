@@ -1,27 +1,29 @@
 <template>
-  <section class="result-view">
-    <h2>游戏结束</h2>
-    <p class="summary">以下为本局结算结果，可选择继续游戏或返回大厅。</p>
+  <section class="result-view glass-panel">
+    <h2>🏆 Final Settlement</h2>
+    <p class="summary">以下为本局链上收益结算，可选择继续冒险或返回大厅。</p>
 
     <div class="results">
-      <div v-if="enrichedResults.length" class="card">
-        <h3>最终排名</h3>
+      <div v-if="enrichedResults.length" class="card scoreboard">
         <ol>
           <li v-for="item in enrichedResults" :key="item.playerId">
             <div class="row-primary">
-              <span class="rank">#{{ item.rank }}</span>
-              <span class="name">{{ item.playerName }}</span>
-              <span class="gold">{{ item.finalGold }} 金币</span>
+              <span class="rank-pill">#{{ item.rank }}</span>
+              <div class="info">
+                <span class="name">{{ item.playerName }}</span>
+                <span class="gold">金币 {{ item.finalGold }}</span>
+              </div>
+              <span class="reward">{{ item.rewardLabel }}</span>
             </div>
             <div class="row-secondary">
-              <span class="payout">分配 {{ item.rewardLabel }}</span>
+              <span class="entry">投入 {{ item.entranceFeeLabel }}</span>
               <span :class="['net', item.netClass]">净收益 {{ item.netLabel }}</span>
             </div>
           </li>
         </ol>
       </div>
 
-      <div v-else class="card">
+      <div v-else class="card fallback">
         <h3>最终排名（推算）</h3>
         <ol>
           <li v-for="player in fallback" :key="player.playerId">
@@ -34,7 +36,7 @@
 
     <div class="actions">
       <button @click="gameStore.continueGame">继续游戏</button>
-      <button @click="gameStore.leaveRoom">返回大厅</button>
+      <button class="secondary" @click="gameStore.leaveRoom">返回大厅</button>
     </div>
   </section>
 </template>
@@ -100,19 +102,30 @@ export default {
     }
 
     const finalResults = computed(() => Array.isArray(gameStore.finalResults) ? gameStore.finalResults : [])
-    const baseEntranceWei = computed(() => parseEthToWei(gameStore.defaultEntranceEth))
-    const baseEntranceLabel = computed(() => `${gameStore.defaultEntranceEth} ETH`)
+
+    const resolveEntryWei = (item) => {
+      if (item && item.entranceFeeWei != null) {
+        return safeBigInt(item.entranceFeeWei)
+      }
+      if (item && item.entranceFeeEth != null) {
+        return parseEthToWei(item.entranceFeeEth)
+      }
+      return parseEthToWei(gameStore.defaultEntranceEth)
+    }
 
     const enrichedResults = computed(() => {
-      const entry = baseEntranceWei.value
       return finalResults.value.map((item) => {
         const rewardWei = safeBigInt(item.etherChange)
-        const netWei = rewardWei - entry
+        const entryWei = resolveEntryWei(item)
+        const netWei = item && item.netChangeWei != null
+          ? safeBigInt(item.netChangeWei)
+          : (rewardWei - entryWei)
         return {
           ...item,
           rewardLabel: `${formatWeiValue(rewardWei)} ETH`,
           netLabel: formatWeiWithSign(netWei),
-          netClass: netWei === 0n ? 'neutral' : (netWei > 0n ? 'positive' : 'negative')
+          netClass: netWei === 0n ? 'neutral' : (netWei > 0n ? 'positive' : 'negative'),
+          entranceFeeLabel: `${formatWeiValue(entryWei)} ETH`
         }
       })
     })
@@ -122,7 +135,7 @@ export default {
       return [...players].sort((a, b) => b.goldInCamp - a.goldInCamp)
     })
 
-    return { gameStore, enrichedResults, fallback, baseEntranceLabel }
+    return { gameStore, enrichedResults, fallback }
   }
 }
 </script>
@@ -130,86 +143,109 @@ export default {
 <style scoped>
 .result-view {
   text-align: center;
-  padding: 24px;
-  background: #fafbfc;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+h2 {
+  font-size: 26px;
 }
 
 .summary {
-  color: #666;
+  color: var(--text-muted);
   font-size: 14px;
+  letter-spacing: 0.02em;
 }
 
 .results {
-  margin: 20px auto;
-  max-width: 420px;
+  display: flex;
+  justify-content: center;
 }
 
 .card {
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e1e4e8;
-  padding: 16px;
+  width: 100%;
+  max-width: 520px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(120, 141, 176, 0.3);
+  background: rgba(10, 18, 32, 0.78);
+  padding: 20px 24px;
 }
 
-h3 {
-  margin: 0 0 12px;
-  font-size: 18px;
-}
-
-ol {
-  padding: 0;
-  margin: 0;
+.scoreboard ol {
   list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-li {
-  padding: 10px 0;
-  border-bottom: 1px solid #f1f3f5;
-}
-
-li:last-child {
-  border-bottom: none;
+.scoreboard li {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(16, 24, 38, 0.88);
+  border: 1px solid rgba(120, 141, 176, 0.28);
 }
 
 .row-primary {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.rank-pill {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid rgba(244, 193, 93, 0.4);
+  background: rgba(244, 193, 93, 0.18);
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.info .name {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.info .gold {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.reward {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
 }
 
 .row-secondary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 6px;
-  font-size: 13px;
-  color: #555;
-  gap: 12px;
-  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
-.rank {
-  font-weight: 600;
-  width: 20px;
-  text-align: left;
-}
-
-.name {
-  flex: 1;
-  text-align: left;
-  font-weight: 600;
-}
-
-.gold {
-  color: #2d7ff9;
-  font-weight: 600;
-}
-
-.payout {
-  color: #555;
+.entry {
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .net {
@@ -217,27 +253,59 @@ li:last-child {
 }
 
 .net.positive {
-  color: #2f9e44;
+  color: var(--success);
 }
 
 .net.negative {
-  color: #e03131;
+  color: var(--danger);
 }
 
 .net.neutral {
-  color: #6c757d;
+  color: var(--text-muted);
 }
 
-.entrance-note {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #666;
+.fallback h3 {
+  margin-bottom: 16px;
+}
+
+.fallback ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fallback li {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(16, 24, 38, 0.85);
+  border-radius: var(--radius-sm);
 }
 
 .actions {
-  margin-top: 18px;
   display: flex;
   justify-content: center;
   gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .result-view {
+    padding: 26px 22px;
+  }
+  .row-primary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .row-secondary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .actions {
+    flex-direction: column;
+  }
 }
 </style>
