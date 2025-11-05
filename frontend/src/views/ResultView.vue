@@ -1,6 +1,6 @@
 <template>
   <section class="result-view glass-panel">
-    <h2>🏆 Final Settlement</h2>
+    <h2>🏆 结果结算</h2>
     <p class="summary">以下为本局链上收益结算，可选择继续冒险或返回大厅。</p>
 
     <div class="results">

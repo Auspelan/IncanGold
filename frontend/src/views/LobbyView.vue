@@ -2,7 +2,7 @@
   <section class="lobby glass-panel">
     <header class="section-header">
       <div class="titles">
-        <h2>🏠 链上冒险大厅</h2>
+        <h2>🏠 冒险大厅</h2>
         <p class="subtitle">输入个人信息与入场费，集结 3 名探险家即可启程。</p>
       </div>
       <div v-if="pill" class="status-pill glass-chip">
@@ -101,9 +101,9 @@ export default {
     })
 
     const feeOptions = computed(() => [
-      { value: '0.01', label: '0.01 ETH', note: 'Basic' },
-      { value: '0.1', label: '0.1 ETH', note: 'Intermediate' },
-      { value: '1', label: '1 ETH', note: 'Advanced' }
+      { value: '0.01', label: '0.01 ETH', note: '基础' },
+      { value: '0.1', label: '0.1 ETH', note: '进阶' },
+      { value: '1', label: '1 ETH', note: '高阶' }
     ])
 
     const selectFee = (value) => {

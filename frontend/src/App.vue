@@ -23,7 +23,7 @@
 
         <div class="connection" :class="{ online: gameStore.isConnected, offline: !gameStore.isConnected }">
           <span class="indicator"></span>
-          <span class="status-text">{{ gameStore.isConnected ? '已连接' : '未连接' }}</span>
+          <span class="status-text">{{ gameStore.isConnected ? 'Connected' : 'Disconnected' }}</span>
           <span v-if="gameStore.connectionError" class="error">{{ gameStore.connectionError }}</span>
         </div>
       </div>
