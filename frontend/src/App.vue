@@ -1,11 +1,17 @@
 <template>
   <div id="app" :class="['app-shell', themeClass]">
+    
     <div class="background-frame" aria-hidden="true">
+      <!--
       <div class="background-layer aurora"></div>
+      
       <div class="background-layer grid"></div>
       <div class="background-layer dust"></div>
+      -->
     </div>
+    
     <header class="app-header glass-panel">
+      
       <div class="brand">
         <span class="brand-glyph">🪙</span>
         <div class="brand-copy">
@@ -13,7 +19,7 @@
           <p class="tagline">Blockchain Expedition Game</p>
         </div>
       </div>
-
+      
       <div class="header-metadata">
         <div class="chip-row">
           <div class="glass-chip">
@@ -278,7 +284,7 @@ p {
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--panel-shadow);
-  backdrop-filter: blur(18px);
+  /*backdrop-filter: blur(18px);*/
 }
 
 .view-host {

@@ -60,10 +60,12 @@ export default {
         let status = { text: '等待选择', emoji: '🕒', className: 'awaiting' }
 
         if (player.hasMadeChoice) {
-          if (player.choice === 'advance') {
-            status = { text: '已决定继续探索', emoji: '🏃', className: 'decided-forward' }
-          } else if (player.choice === 'return') {
-            status = { text: '已决定返回营地', emoji: '🏕️', className: 'decided-retreat' }
+          if(player.playerId === gameStore.playerId) {
+            if (player.choice === 'advance') {
+              status = { text: '已决定继续探索', emoji: '🏃', className: 'decided-forward' }
+            } else if (player.choice === 'return') {
+              status = { text: '已决定返回营地', emoji: '🏕️', className: 'decided-retreat' }
+            } 
           } else {
             status = { text: '已完成选择', emoji: '✅', className: 'decided-ready' }
           }
