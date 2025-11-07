@@ -4,7 +4,7 @@
     <div class="background-frame" aria-hidden="true">
       <!--
       <div class="background-layer aurora"></div>
-      
+
       <div class="background-layer grid"></div>
       <div class="background-layer dust"></div>
       -->
@@ -92,7 +92,7 @@ export default {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Inter:wght@400;500;600&display=swap');
+@import './assets/fonts.css';
 
 :root {
   color-scheme: dark;

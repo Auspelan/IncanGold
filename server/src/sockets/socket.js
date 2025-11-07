@@ -191,6 +191,7 @@ function initSocket(server, options = {}) {
         if (manager.isGameFinished(roomId)) {
           manager.settleGameOnChain(room.game.gameId);
           broadcastGameOver(updatedRoom);
+          room.clearReady();
         }
 
         if (typeof ack === 'function') ack({ ok: true });

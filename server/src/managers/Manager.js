@@ -24,6 +24,7 @@ class GameSessionManager {
             return res;
           }
         }
+        return {ok: true};
       }
     }
     // 否则创建新房间等待其他玩家
